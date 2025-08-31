@@ -62,7 +62,13 @@
 
     <div class="flex flex-col md:flex-row h-screen">
         <!-- Control Panel -->
-        <div class="w-full md:w-96 bg-white shadow-lg p-4 info-panel flex-shrink-0">
+        <div class="w-full md:w-96 bg-white shadow-lg p-4 info-panel flex-shrink-0
+            md:overflow-y-auto
+            fixed md:static top-0 left-0 z-20 h-full md:h-auto
+            transition-all duration-300
+            md:rounded-none rounded-b-2xl
+            md:w-96 w-full
+            ">
             <div class="flex items-center pb-4 border-b">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-4-3-5s-4-1-6-1-4 .5-6 1-3 3-3 5a7 7 0 0 0 7 7z"/><path d="M12 2v2"/><path d="M12 13a2.5 2.5 0 0 0-2.5 2.5v0a2.5 2.5 0 0 0 5 0v0A2.5 2.5 0 0 0 12 13z"/><path d="m18.5 6.5-1.5 1.5"/><path d="m5.5 6.5 1.5 1.5"/></svg>
                 <h1 class="text-xl font-bold text-gray-800 ml-2">เสาวัดระดับน้ำอัจฉริยะ</h1>
@@ -135,10 +141,48 @@
         </div>
         
         <!-- Map -->
-        <div id="map-container" class="flex-grow">
-            <div id="map"></div>
+        <div id="map-container" class="flex-grow relative md:static md:h-auto h-[calc(100vh-0px)]">
+            <div id="map" class="absolute inset-0 md:static md:h-full h-full"></div>
         </div>
     </div>
+
+    <style>
+        @media (max-width: 768px) {
+            .info-panel {
+                position: fixed !important;
+                width: 100vw !important;
+                height: 60vh !important;
+                max-height: 60vh !important;
+                bottom: 0;
+                left: 0;
+                z-index: 30;
+                border-radius: 0 0 1.5rem 1.5rem;
+                box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+            }
+            #map-container {
+                height: 40vh !important;
+            }
+            #map {
+                height: 100% !important;
+            }
+        }
+        @media (min-width: 769px) {
+            .info-panel {
+                position: static !important;
+                width: 24rem !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                border-radius: 0;
+                box-shadow: 2px 0 16px rgba(0,0,0,0.08);
+            }
+            #map-container {
+                height: 100vh !important;
+            }
+            #map {
+                height: 100% !important;
+            }
+        }
+    </style>
 
     <script>
         // --- Global State ---
