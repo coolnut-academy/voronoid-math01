@@ -118,7 +118,14 @@
 </head>
 <body class="bg-gray-100">
 
-    <div class="flex flex-col md:flex-row h-screen">
+    <!-- ปุ่มสลับ layout เฉพาะมือถือ/แท็บเล็ต -->
+    <div id="toggleLayoutBar" class="fixed top-2 right-2 z-50 md:hidden">
+        <button id="toggleLayoutBtn" class="bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg text-xs">
+            สลับตำแหน่งแผนที่/คำสั่ง
+        </button>
+    </div>
+
+    <div id="mainLayout" class="flex flex-col md:flex-row h-screen">
         <!-- Control Panel -->
         <div class="w-full md:w-96 bg-white shadow-lg p-4 info-panel flex-shrink-0
             md:overflow-y-auto
@@ -206,30 +213,42 @@
 
     <style>
         @media (max-width: 768px) {
+            #mainLayout.vertical {
+                flex-direction: column !important;
+            }
+            #mainLayout.horizontal {
+                flex-direction: row !important;
+            }
             .info-panel {
-                position: fixed !important;
+                position: static !important;
                 width: 100vw !important;
                 height: 60vh !important;
                 max-height: 60vh !important;
-                bottom: 0;
-                left: 0;
-                z-index: 30;
                 border-radius: 0 0 1.5rem 1.5rem;
-                box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
-                background: #fff;
+                box-shadow: none;
             }
             #map-container {
-                /* ไม่ใช้ vh/dvh ตรง ๆ */
                 width: 100vw !important;
                 position: relative;
+                height: 40vh !important;
+                min-height: 40vh !important;
             }
-            #map {
-                width: 100vw !important;
-                position: absolute;
-                top: 0; left: 0; right: 0; bottom: 0;
+            #mainLayout.horizontal .info-panel {
+                width: 50vw !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+            }
+            #mainLayout.horizontal #map-container {
+                width: 50vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
             }
         }
         @media (min-width: 769px) {
+            #mainLayout {
+                flex-direction: row !important;
+                height: 100vh !important;
+            }
             .info-panel {
                 position: static !important;
                 width: 24rem !important;
@@ -240,7 +259,7 @@
                 background: #fff;
             }
             #map-container {
-                height: 100dvh !important;
+                height: 100vh !important;
                 width: auto !important;
             }
             #map {
@@ -600,27 +619,56 @@
             initializeMap();
             updateCounts();
 
-            // --- Mobile viewport fix ---
+            // --- Responsive Layout Toggle ---
+            const mainLayout = document.getElementById('mainLayout');
+            const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
+            let isVertical = true; // default: vertical (panel on top, map below)
+
+            function setLayout() {
+                if (window.innerWidth <= 768) {
+                    if (isVertical) {
+                        mainLayout.classList.add('vertical');
+                        mainLayout.classList.remove('horizontal');
+                    } else {
+                        mainLayout.classList.add('horizontal');
+                        mainLayout.classList.remove('vertical');
+                    }
+                } else {
+                    mainLayout.classList.remove('vertical');
+                    mainLayout.classList.remove('horizontal');
+                }
+            }
+
+            toggleLayoutBtn.addEventListener('click', () => {
+                isVertical = !isVertical;
+                setLayout();
+            });
+
+            window.addEventListener('resize', setLayout);
+            setLayout();
+
+            // --- Mobile map height fix ---
             function resizeMapContainer() {
                 if (window.innerWidth <= 768) {
-                    // คำนวณพื้นที่ map-container ให้เหลือจาก panel
-                    const vh = window.innerHeight;
-                    const panelHeight = Math.round(vh * 0.6);
-                    const mapHeight = vh - panelHeight;
-                    const mapContainer = document.getElementById('map-container');
-                    const mapDiv = document.getElementById('map');
-                    mapContainer.style.height = mapHeight + 'px';
-                    mapDiv.style.height = mapHeight + 'px';
+                    if (isVertical) {
+                        const vh = window.innerHeight;
+                        const panelHeight = Math.round(vh * 0.6);
+                        const mapHeight = vh - panelHeight;
+                        document.getElementById('map-container').style.height = mapHeight + 'px';
+                        document.getElementById('map').style.height = mapHeight + 'px';
+                    } else {
+                        // horizontal: map/panel 50% each
+                        document.getElementById('map-container').style.height = '100vh';
+                        document.getElementById('map').style.height = '100%';
+                    }
                 } else {
-                    // Desktop
-                    const mapContainer = document.getElementById('map-container');
-                    const mapDiv = document.getElementById('map');
-                    mapContainer.style.height = '100vh';
-                    mapDiv.style.height = '100%';
+                    document.getElementById('map-container').style.height = '100vh';
+                    document.getElementById('map').style.height = '100%';
                 }
             }
             resizeMapContainer();
             window.addEventListener('resize', resizeMapContainer);
+            toggleLayoutBtn.addEventListener('click', resizeMapContainer);
         });
     </script>
 </body>
