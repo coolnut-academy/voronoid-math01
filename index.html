@@ -79,13 +79,14 @@
                 background: #fff;
             }
             #map-container {
-                height: 40dvh !important;
-                min-height: 40dvh !important;
+                /* ไม่ใช้ vh/dvh ตรง ๆ */
                 width: 100vw !important;
+                position: relative;
             }
             #map {
-                height: 100% !important;
-                min-height: 100% !important;
+                width: 100vw !important;
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
             }
         }
         @media (min-width: 769px) {
@@ -218,13 +219,14 @@
                 background: #fff;
             }
             #map-container {
-                height: 40vh !important;
-                min-height: 40vh !important;
+                /* ไม่ใช้ vh/dvh ตรง ๆ */
                 width: 100vw !important;
+                position: relative;
             }
             #map {
-                height: 100% !important;
-                min-height: 100% !important;
+                width: 100vw !important;
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
             }
         }
         @media (min-width: 769px) {
@@ -597,6 +599,28 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeMap();
             updateCounts();
+
+            // --- Mobile viewport fix ---
+            function resizeMapContainer() {
+                if (window.innerWidth <= 768) {
+                    // คำนวณพื้นที่ map-container ให้เหลือจาก panel
+                    const vh = window.innerHeight;
+                    const panelHeight = Math.round(vh * 0.6);
+                    const mapHeight = vh - panelHeight;
+                    const mapContainer = document.getElementById('map-container');
+                    const mapDiv = document.getElementById('map');
+                    mapContainer.style.height = mapHeight + 'px';
+                    mapDiv.style.height = mapHeight + 'px';
+                } else {
+                    // Desktop
+                    const mapContainer = document.getElementById('map-container');
+                    const mapDiv = document.getElementById('map');
+                    mapContainer.style.height = '100vh';
+                    mapDiv.style.height = '100%';
+                }
+            }
+            resizeMapContainer();
+            window.addEventListener('resize', resizeMapContainer);
         });
     </script>
 </body>
