@@ -12,8 +12,8 @@
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden;
             font-family: 'Inter', 'Kanit', sans-serif;
+            /* ไม่ใช้ overflow: hidden เพื่อให้ scroll ได้บนมือถือ */
         }
         #map {
             height: 100%;
@@ -24,8 +24,11 @@
             background: #f0f9ff;
         }
         .info-panel {
-            max-height: 100vh;
+            max-height: 100dvh;
             overflow-y: auto;
+            /* เพิ่ม overscroll-behavior เพื่อป้องกัน scroll กระโดดบนมือถือ */
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
         /* Custom scrollbar */
         .info-panel::-webkit-scrollbar {
@@ -52,6 +55,60 @@
             border-radius: 50%;
             margin-right: 10px;
             border: 1px solid #777;
+        }
+
+        /* Responsive Panel & Map */
+        @media (max-width: 768px) {
+            body, html {
+                height: 100dvh;
+            }
+            .flex-col {
+                flex-direction: column !important;
+                height: 100dvh !important;
+            }
+            .info-panel {
+                position: fixed !important;
+                width: 100vw !important;
+                height: 60dvh !important;
+                max-height: 60dvh !important;
+                bottom: 0;
+                left: 0;
+                z-index: 30;
+                border-radius: 0 0 1.5rem 1.5rem;
+                box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+                background: #fff;
+            }
+            #map-container {
+                height: 40dvh !important;
+                min-height: 40dvh !important;
+                width: 100vw !important;
+            }
+            #map {
+                height: 100% !important;
+                min-height: 100% !important;
+            }
+        }
+        @media (min-width: 769px) {
+            .flex-row {
+                flex-direction: row !important;
+                height: 100dvh !important;
+            }
+            .info-panel {
+                position: static !important;
+                width: 24rem !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                border-radius: 0;
+                box-shadow: 2px 0 16px rgba(0,0,0,0.08);
+                background: #fff;
+            }
+            #map-container {
+                height: 100dvh !important;
+                width: auto !important;
+            }
+            #map {
+                height: 100% !important;
+            }
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -158,12 +215,16 @@
                 z-index: 30;
                 border-radius: 0 0 1.5rem 1.5rem;
                 box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+                background: #fff;
             }
             #map-container {
                 height: 40vh !important;
+                min-height: 40vh !important;
+                width: 100vw !important;
             }
             #map {
                 height: 100% !important;
+                min-height: 100% !important;
             }
         }
         @media (min-width: 769px) {
@@ -174,9 +235,11 @@
                 max-height: 100vh !important;
                 border-radius: 0;
                 box-shadow: 2px 0 16px rgba(0,0,0,0.08);
+                background: #fff;
             }
             #map-container {
-                height: 100vh !important;
+                height: 100dvh !important;
+                width: auto !important;
             }
             #map {
                 height: 100% !important;
