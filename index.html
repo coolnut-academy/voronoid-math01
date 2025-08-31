@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องมือหาตำแหน่งติดตั้งเสาวัดระดับน้ำอัจฉริยะ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', 'Kanit', sans-serif;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+            cursor: crosshair;
+        }
+        .leaflet-container {
+            background: #f0f9ff;
+        }
+        .info-panel {
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+        /* Custom scrollbar */
+        .info-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .info-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .info-panel::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        .info-panel::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 1px solid #777;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex flex-col md:flex-row h-screen">
+        <!-- Control Panel -->
+        <div class="w-full md:w-96 bg-white shadow-lg p-4 info-panel flex-shrink-0">
+            <div class="flex items-center pb-4 border-b">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-4-3-5s-4-1-6-1-4 .5-6 1-3 3-3 5a7 7 0 0 0 7 7z"/><path d="M12 2v2"/><path d="M12 13a2.5 2.5 0 0 0-2.5 2.5v0a2.5 2.5 0 0 0 5 0v0A2.5 2.5 0 0 0 12 13z"/><path d="m18.5 6.5-1.5 1.5"/><path d="m5.5 6.5 1.5 1.5"/></svg>
+                <h1 class="text-xl font-bold text-gray-800 ml-2">เสาวัดระดับน้ำอัจฉริยะ</h1>
+            </div>
+
+            <!-- Step 1: Add Villages -->
+            <div class="my-4">
+                <h2 class="font-bold text-lg text-gray-700 mb-2">ขั้นตอนที่ 1: เพิ่มหมู่บ้าน</h2>
+                <p class="text-sm text-gray-500 mb-3">คลิกบนแผนที่เพื่อเพิ่มตำแหน่งหมู่บ้าน หรืออัปโหลดไฟล์ CSV</p>
+                <div class="space-y-2">
+                    <input type="file" id="csvVillages" accept=".csv" class="hidden">
+                    <button onclick="document.getElementById('csvVillages').click()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm">อัปโหลด CSV หมู่บ้าน</button>
+                </div>
+                 <div class="mt-4 text-sm">
+                    <p>หมู่บ้านที่เพิ่มแล้ว: <span id="villageCount" class="font-bold">0</span> จุด</p>
+                </div>
+            </div>
+
+            <!-- Step 2: Configuration & Run -->
+            <div class="my-4 p-4 bg-gray-50 rounded-lg border">
+                <h2 class="font-bold text-lg text-gray-700 mb-3">ขั้นตอนที่ 2: ตั้งค่าและคำนวณ</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="numSensors" class="block text-sm font-medium text-gray-700">จำนวนเซ็นเซอร์ที่จะติดตั้ง:</label>
+                        <input type="number" id="numSensors" value="3" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="gridDensity" class="block text-sm font-medium text-gray-700">ความละเอียดของพื้นที่สำรวจ:</label>
+                        <select id="gridDensity" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <option value="10">ต่ำ (10x10 กริด)</option>
+                            <option value="20" selected>ปานกลาง (20x20 กริด)</option>
+                            <option value="30">สูง (30x30 กริด)</option>
+                            <option value="40">สูงมาก (40x40 กริด)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">ยิ่งความละเอียดสูง การคำนวณจะยิ่งใช้เวลานานขึ้น</p>
+                    </div>
+                </div>
+                 <div class="mt-6 space-y-3">
+                     <button id="runBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
+                        <span id="runBtnText">คำนวณหาตำแหน่งที่ดีที่สุด</span>
+                        <div id="loadingSpinner" class="hidden w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mx-auto"></div>
+                    </button>
+                    <button id="resetBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">ล้างข้อมูลทั้งหมด</button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsPanel" class="my-4 p-4 bg-blue-50 rounded-lg hidden">
+                <h2 class="font-bold text-lg text-blue-800 mb-2">ผลการคำนวณ</h2>
+                <p class="text-sm text-gray-600">เกณฑ์: ลดระยะทางไกลที่สุด (Minimize Maximum Distance)</p>
+                <p class="text-lg font-bold text-blue-600 mt-2" id="resultText"></p>
+                <div id="optimalLocations" class="mt-2 text-sm text-gray-700"></div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="my-4 p-4 bg-gray-50 rounded-lg border">
+                <h2 class="font-bold text-lg text-gray-700 mb-3">คำอธิบายสัญลักษณ์</h2>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span class="text-sm">หมู่บ้าน</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 20px; height: 20px; margin-right: 10px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" class="w-full h-full"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </div>
+                    <span class="text-sm">ตำแหน่งติดตั้งที่ดีที่สุด</span>
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- Map -->
+        <div id="map-container" class="flex-grow">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Global State ---
+        let map;
+        let villages = [];
+        let villageLayer = L.layerGroup();
+        let resultLayer = L.layerGroup();
+        let voronoiLayer = L.layerGroup();
+
+        // --- UI Elements ---
+        const villageCountEl = document.getElementById('villageCount');
+        const runBtn = document.getElementById('runBtn');
+        const runBtnText = document.getElementById('runBtnText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resetBtn = document.getElementById('resetBtn');
+        const numSensorsInput = document.getElementById('numSensors');
+        const resultsPanel = document.getElementById('resultsPanel');
+        const resultText = document.getElementById('resultText');
+        const optimalLocationsEl = document.getElementById('optimalLocations');
+
+        // --- Map Icons ---
+        const villageIcon = L.divIcon({
+            html: `<div class="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-md"></div>`,
+            className: '',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
+        const optimalIcon = L.divIcon({
+            html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" class="w-8 h-8 drop-shadow-lg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
+            className: '',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        // --- Initialization ---
+        function initializeMap() {
+            // Initialize map centered on Mae Hong Son
+            map = L.map('map').setView([19.3015, 97.9646], 9);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            villageLayer.addTo(map);
+            resultLayer.addTo(map);
+            voronoiLayer.addTo(map);
+
+            map.on('click', onMapClick);
+        }
+
+        // --- UI Logic ---
+        function updateCounts() {
+            villageCountEl.textContent = villages.length;
+        }
+
+        function toggleLoading(isLoading) {
+            if (isLoading) {
+                runBtn.disabled = true;
+                runBtnText.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                runBtn.disabled = false;
+                runBtnText.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+        
+        // --- Data Handling ---
+        function addVillage(latlng) {
+            const point = { lat: latlng.lat, lng: latlng.lng };
+            villages.push(point);
+            const marker = L.marker(latlng, { icon: villageIcon }).addTo(villageLayer);
+            marker.bindPopup(`หมู่บ้าน #${villages.length}`);
+            updateCounts();
+        }
+
+        function onMapClick(e) {
+            addVillage(e.latlng);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const points = parseCSV(text);
+                if (!points) return;
+                points.forEach(p => addVillage(L.latLng(p.lat, p.lng)));
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        }
+
+        function parseCSV(text) {
+            try {
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+                const latIndex = header.indexOf('latitude');
+                const lonIndex = header.indexOf('longitude');
+
+                if (latIndex === -1 || lonIndex === -1) {
+                    alert('ไฟล์ CSV ต้องมีคอลัมน์ "latitude" และ "longitude"');
+                    return null;
+                }
+
+                return lines.slice(1).map(line => {
+                    const data = line.split(',');
+                    return {
+                        lat: parseFloat(data[latIndex]),
+                        lng: parseFloat(data[lonIndex])
+                    };
+                }).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV');
+                console.error("CSV Parse Error:", error);
+                return null;
+            }
+        }
+        
+        function resetAll() {
+            villages = [];
+            villageLayer.clearLayers();
+            resultLayer.clearLayers();
+            voronoiLayer.clearLayers();
+            updateCounts();
+            resultsPanel.classList.add('hidden');
+        }
+
+        // --- Core Calculation Logic ---
+        
+        /**
+         * Calculates distance between two lat/lon points using Haversine formula.
+         * @returns {number} Distance in kilometers.
+         */
+        function haversineDistance(p1, p2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        /**
+         * Generates combinations of k elements from an array.
+         */
+        function* getCombinations(arr, k) {
+            if (k === 0) {
+                yield [];
+                return;
+            }
+            for (let i = 0; i <= arr.length - k; i++) {
+                const first = arr[i];
+                const rest = arr.slice(i + 1);
+                for (const combination of getCombinations(rest, k - 1)) {
+                    yield [first, ...combination];
+                }
+            }
+        }
+
+        function generateCandidateGrid(points, dimension) {
+            if (points.length === 0) return [];
+
+            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+            points.forEach(p => {
+                if (p.lat < minLat) minLat = p.lat;
+                if (p.lat > maxLat) maxLat = p.lat;
+                if (p.lng < minLng) minLng = p.lng;
+                if (p.lng > maxLng) maxLng = p.lng;
+            });
+            
+            // Handle case with single point
+            if (points.length === 1) {
+                minLat -= 0.1; maxLat += 0.1;
+                minLng -= 0.1; maxLng += 0.1;
+            }
+
+            // Add padding to the bounding box
+            const latPadding = (maxLat - minLat) * 0.1 || 0.05;
+            const lngPadding = (maxLng - minLng) * 0.1 || 0.05;
+
+            minLat -= latPadding;
+            maxLat += latPadding;
+            minLng -= lngPadding;
+            maxLng += lngPadding;
+
+            const grid = [];
+            const latStep = dimension > 1 ? (maxLat - minLat) / (dimension - 1) : 0;
+            const lngStep = dimension > 1 ? (maxLng - minLng) / (dimension - 1) : 0;
+
+            for (let i = 0; i < dimension; i++) {
+                for (let j = 0; j < dimension; j++) {
+                    grid.push({
+                        lat: minLat + (i * latStep),
+                        lng: minLng + (j * lngStep)
+                    });
+                }
+            }
+            return grid;
+        }
+
+
+        function runOptimization() {
+            clearResults();
+            const numSensors = parseInt(numSensorsInput.value, 10);
+            const gridDim = parseInt(document.getElementById('gridDensity').value, 10);
+
+            if (villages.length === 0) {
+                alert('กรุณาเพิ่มตำแหน่งหมู่บ้านอย่างน้อย 1 แห่ง');
+                return;
+            }
+
+            toggleLoading(true);
+            resultsPanel.classList.add('hidden');
+
+            // Using setTimeout to allow UI to update before heavy computation
+            setTimeout(() => {
+                // 1. Generate Candidate Points
+                const candidates = generateCandidateGrid(villages, gridDim);
+                
+                if (candidates.length < numSensors) {
+                    alert(`เกิดข้อผิดพลาดในการสร้างกริดจุดสำรวจ กรุณาลองใหม่`);
+                    toggleLoading(false);
+                    return;
+                }
+
+                // 2. Find Best Combination
+                let bestCombination = null;
+                let bestScore = Infinity;
+
+                const combinationsIterator = getCombinations(candidates, numSensors);
+
+                for (const combo of combinationsIterator) {
+                    let maxDistForThisCombo = 0;
+
+                    for (const village of villages) {
+                        let min_dist_to_sensor = Infinity;
+                        for (const sensor of combo) {
+                            const dist = haversineDistance(village, sensor);
+                            if (dist < min_dist_to_sensor) {
+                                min_dist_to_sensor = dist;
+                            }
+                        }
+                        if (min_dist_to_sensor > maxDistForThisCombo) {
+                            maxDistForThisCombo = min_dist_to_sensor;
+                        }
+                    }
+
+                    if (maxDistForThisCombo < bestScore) {
+                        bestScore = maxDistForThisCombo;
+                        bestCombination = combo;
+                    }
+                }
+                
+                toggleLoading(false);
+                if (bestCombination) {
+                    displayResults(bestCombination, bestScore);
+                } else {
+                     alert('ไม่สามารถหาผลลัพธ์ได้ กรุณาตรวจสอบข้อมูล');
+                }
+
+            }, 100);
+        }
+
+        // --- Result Display ---
+        function clearResults() {
+             resultLayer.clearLayers();
+             voronoiLayer.clearLayers();
+             optimalLocationsEl.innerHTML = '';
+        }
+
+        function displayResults(optimalSensors, score) {
+            clearResults();
+            
+            let locationsHTML = '<ul>';
+            optimalSensors.forEach((sensor, index) => {
+                L.marker([sensor.lat, sensor.lng], { icon: optimalIcon })
+                 .addTo(resultLayer)
+                 .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}, Lng: ${sensor.lng.toFixed(4)}`);
+                
+                locationsHTML += `<li class="mb-1"><b>จุดที่ ${index + 1}:</b> ${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}</li>`;
+            });
+            locationsHTML += '</ul>';
+            optimalLocationsEl.innerHTML = locationsHTML;
+
+            drawVoronoi(optimalSensors);
+            
+            resultText.textContent = `ระยะทางไกลที่สุดที่รับประกันได้: ${score.toFixed(2)} กม.`;
+            resultsPanel.classList.remove('hidden');
+        }
+
+        function drawVoronoi(points) {
+            // Recalculate bounds to ensure Voronoi covers all points
+            const allPoints = [...villages, ...points];
+            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+            allPoints.forEach(p => {
+                if (p.lat < minLat) minLat = p.lat;
+                if (p.lat > maxLat) maxLat = p.lat;
+                if (p.lng < minLng) minLng = p.lng;
+                if (p.lng > maxLng) maxLng = p.lng;
+            });
+            const latPadding = (maxLat - minLat) * 0.2 || 0.1;
+            const lngPadding = (maxLng - minLng) * 0.2 || 0.1;
+            
+            const mapBounds = L.latLngBounds([
+                [minLat - latPadding, minLng - lngPadding],
+                [maxLat + latPadding, maxLng + lngPadding]
+            ]);
+
+            const topLeft = map.project(mapBounds.getNorthWest());
+            const bottomRight = map.project(mapBounds.getSouthEast());
+
+            const voronoiBounds = [topLeft.x, topLeft.y, bottomRight.x, bottomRight.y];
+            
+            const projectedPoints = points.map(p => {
+                const projected = map.project(L.latLng(p.lat, p.lng));
+                return [projected.x, projected.y];
+            });
+            
+            const delaunay = d3.Delaunay.from(projectedPoints);
+            const voronoi = delaunay.voronoi(voronoiBounds);
+            
+            const colors = d3.scaleOrdinal(d3.schemeCategory10);
+            
+            for (let i = 0; i < points.length; i++) {
+                const cell = voronoi.cellPolygon(i);
+                if(cell) {
+                    const latlngs = cell.map(p => map.unproject(L.point(p[0], p[1])));
+                    L.polygon(latlngs, {
+                        color: colors(i),
+                        fillColor: colors(i),
+                        fillOpacity: 0.15,
+                        weight: 2
+                    }).addTo(voronoiLayer);
+                }
+            }
+        }
+        
+        // --- Event Listeners ---
+        document.getElementById('csvVillages').addEventListener('change', handleFileUpload);
+        runBtn.addEventListener('click', runOptimization);
+        resetBtn.addEventListener('click', resetAll);
+        
+        // --- Document Ready ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+            updateCounts();
+        });
+    </script>
+</body>
+</html>
+
