@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เครื่องมือหาตำแหน่งติดตั้งเสาวัดระดับน้ำอัจฉริยะ</title>
+    <title>เครื่องมือหาตำแหน่งติดตั้งเสาวัดระดับน้ำอัจฉริยะ - Hong Son</title>
+    <link rel="icon" type="image/png" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
+    <link rel="apple-touch-icon" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -27,10 +29,12 @@
         }
         .info-panel {
             max-height: calc(100vh - 64px);
-            overflow-y: auto;
+            overflow-y: auto !important;
             /* เพิ่ม overscroll-behavior เพื่อป้องกัน scroll กระโดดบนมือถือ */
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
+            /* ให้แน่ใจว่า scroll ทำงานได้ทุกสถานการณ์ */
+            scroll-behavior: smooth;
         }
         /* Custom scrollbar */
         .info-panel::-webkit-scrollbar {
@@ -189,7 +193,10 @@
                 background: #fff;
                 transform: translateY(calc(100% - 60px));
                 transition: transform 0.3s ease;
-                overflow-y: auto !important;
+                overflow-y: scroll !important;
+                /* ปรับปรุงการ scroll บนมือถือ */
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
             }
             .info-panel.expanded {
                 transform: translateY(0);
@@ -254,7 +261,9 @@
                 border-radius: 0;
                 box-shadow: 2px 0 16px rgba(0,0,0,0.08);
                 background: #fff;
-                overflow-y: auto !important;
+                overflow-y: scroll !important;
+                /* ปรับปรุงการ scroll บน desktop */
+                scroll-behavior: smooth;
             }
             #map-container {
                 height: calc(100vh - 64px) !important;
@@ -275,8 +284,14 @@
     <div class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-gray-200">
         <div class="flex items-center justify-between px-4 py-3">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-water text-white text-lg"></i>
+                <div class="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white shadow-sm">
+                    <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png" 
+                         alt="Hong Son Logo" 
+                         class="w-full h-full object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg hidden items-center justify-center">
+                        <i class="fas fa-water text-white text-lg"></i>
+                    </div>
                 </div>
                 <div>
                     <h1 class="text-lg font-bold text-gray-800">เสาวัดระดับน้ำอัจฉริยะ</h1>
@@ -347,6 +362,26 @@
                     <h2 class="font-bold text-lg text-gray-700">เพิ่มหมู่บ้าน</h2>
                 </div>
                 <p class="text-sm text-gray-600 mb-4">คลิกบนแผนที่เพื่อเพิ่มตำแหน่งหมู่บ้าน หรืออัปโหลดไฟล์ CSV</p>
+                
+                <!-- CSV Format Instructions -->
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center">
+                        <i class="fas fa-info-circle mr-1"></i>รูปแบบไฟล์ CSV ที่ถูกต้อง:
+                    </h4>
+                    <div class="text-xs text-blue-700 space-y-1">
+                        <p>• ต้องมีคอลัมน์ <code class="bg-blue-100 px-1 rounded">latitude</code> และ <code class="bg-blue-100 px-1 rounded">longitude</code></p>
+                        <p>• บรรทัดแรกเป็นหัวตาราง (header)</p>
+                        <p>• ข้อมูลพิกัดเป็นตัวเลขทศนิยม</p>
+                    </div>
+                    <div class="mt-2 text-xs">
+                        <p class="text-blue-600 font-medium">ตัวอย่าง:</p>
+                        <pre class="bg-blue-100 p-2 rounded text-xs mt-1 overflow-x-auto">latitude,longitude
+19.3015,97.9646
+19.3500,98.0000
+19.2800,97.9200</pre>
+                    </div>
+                </div>
+                
                 <div class="space-y-3">
                     <input type="file" id="csvVillages" accept=".csv" class="hidden">
                     <button onclick="document.getElementById('csvVillages').click()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md">
@@ -583,6 +618,8 @@
                 max-height: 60vh !important;
                 border-radius: 0 0 1.5rem 1.5rem;
                 box-shadow: none;
+                overflow-y: scroll !important;
+                -webkit-overflow-scrolling: touch;
             }
             #map-container {
                 width: 100vw !important;
@@ -594,6 +631,8 @@
                 width: 50vw !important;
                 height: 100vh !important;
                 max-height: 100vh !important;
+                overflow-y: scroll !important;
+                -webkit-overflow-scrolling: touch;
             }
             #mainLayout.horizontal #map-container {
                 width: 50vw !important;
@@ -614,6 +653,8 @@
                 border-radius: 0;
                 box-shadow: 2px 0 16px rgba(0,0,0,0.08);
                 background: #fff;
+                overflow-y: scroll !important;
+                scroll-behavior: smooth;
             }
             #map-container {
                 height: 100vh !important;
@@ -1112,28 +1153,14 @@
                 return;
             }
 
-            // Check if calculation will be too complex - adjusted thresholds
+            // Check if calculation will be too complex - show info but don't block
             const estimatedCombinations = calculateCombinations(gridDim * gridDim, numSensors);
             console.log('Estimated combinations:', estimatedCombinations);
             
-            // More lenient limits for better usability
-            if (estimatedCombinations > 1000000) { // Increased from 500k to 1M
-                const confirm = window.confirm(
-                    `การคำนวณนี้มีความซับซ้อนสูง (ประมาณ ${estimatedCombinations.toLocaleString()} combinations)\n\n` +
-                    `ระบบจะใช้วิธีการคำนวณแบบอัจฉริยะเพื่อลดเวลา:\n` +
-                    `• การสุ่มตัวอย่างอย่างมีระบบ\n` +
-                    `• จำกัดเวลาการคำนวณ 45 วินาที\n` +
-                    `• จำกัดจำนวน combinations ตามจำนวนเซ็นเซอร์\n\n` +
-                    `หากต้องการความแม่นยำสูงสุด แนะนำให้:\n` +
-                    `- ลดความละเอียดกริด\n` +
-                    `- ลดจำนวนเซ็นเซอร์\n\n` +
-                    `ต้องการดำเนินการต่อหรือไม่?`
-                );
-                if (!confirm) {
-                    return;
-                }
-            } else if (estimatedCombinations > 200000) { // Increased from 100k to 200k
-                // Show info but don't block
+            // Show informative notifications without blocking
+            if (estimatedCombinations > 1000000) {
+                showNotification(`การคำนวณซับซ้อน (${estimatedCombinations.toLocaleString()} combinations) - ใช้อัลกอริธึมอัจฉริยะ`, 'info');
+            } else if (estimatedCombinations > 200000) {
                 showNotification(`กำลังคำนวณ ${estimatedCombinations.toLocaleString()} combinations - อาจใช้เวลาสักครู่`, 'info');
             }
 
