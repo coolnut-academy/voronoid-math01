@@ -569,19 +569,8 @@
                             <i class="fas fa-satellite-dish text-purple-500 mr-1"></i>จำนวนเซ็นเซอร์ที่จะติดตั้ง:
                         </label>
                         <input type="number" id="numSensors" value="3" min="1" max="10" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors">
-                    </div>
-                    <div>
-                        <label for="gridDensity" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-th text-purple-500 mr-1"></i>ความละเอียดของพื้นที่สำรวจ:
-                        </label>
-                        <select id="gridDensity" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors">
-                            <option value="10">ต่ำ (10x10 กริด) - เร็ว</option>
-                            <option value="20" selected>ปานกลาง (20x20 กริด) - สมดุล</option>
-                            <option value="30">สูง (30x30 กริด) - แม่นยำ</option>
-                            <option value="40">สูงมาก (40x40 กริด) - แม่นยำมาก</option>
-                        </select>
                         <p class="text-xs text-gray-500 mt-1 flex items-center">
-                            <i class="fas fa-info-circle mr-1"></i>ยิ่งความละเอียดสูง การคำนวณจะยิ่งใช้เวลานานขึ้น
+                            <i class="fas fa-info-circle mr-1"></i>ใช้อัลกอริธึม k-means / Centroidal Voronoi เพื่อหาตำแหน่งที่เหมาะสม
                         </p>
                     </div>
                 </div>
@@ -620,7 +609,7 @@
                     </button>
                 </div>
                 <p class="text-sm text-gray-600 mb-3 flex items-center">
-                    <i class="fas fa-target text-green-500 mr-1"></i>เกณฑ์: ลดระยะทางไกลที่สุด (Minimize Maximum Distance)
+                    <i class="fas fa-target text-green-500 mr-1"></i>เกณฑ์: k-means / Centroidal Voronoi (Least-Squares Centroids)
                 </p>
                 <div class="bg-white p-3 rounded-lg border border-green-200 mb-3">
                     <p class="text-lg font-bold text-green-600" id="resultText"></p>
@@ -634,9 +623,9 @@
                     </h3>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div>เวลาที่ใช้: <span id="calculationTime" class="font-medium">-</span></div>
-                        <div>จุดที่สำรวจ: <span id="totalCandidates" class="font-medium">-</span></div>
-                        <div>Combinations: <span id="totalCombinations" class="font-medium">-</span></div>
-                        <div>ประมวลผล: <span id="processedCombinations" class="font-medium">-</span></div>
+                        <div>ระยะทางสูงสุด: <span id="maxDistanceKm" class="font-medium">-</span> กม.</div>
+                        <div>ระยะทางเฉลี่ย: <span id="averageDistanceKm" class="font-medium">-</span> กม.</div>
+                        <div>อัลกอริธึม: <span class="font-medium text-green-600">k-means / Voronoi</span></div>
                     </div>
                 </div>
             </div>
@@ -711,9 +700,10 @@
                         <ol class="list-decimal list-inside space-y-1 ml-4">
                             <li>เพิ่มตำแหน่งหมู่บ้านโดยคลิกบนแผนที่หรืออัปโหลดไฟล์ CSV</li>
                             <li>กำหนดจำนวนเซ็นเซอร์ที่ต้องการติดตั้ง (1-10 ตัว)</li>
-                            <li>เลือกความละเอียดของพื้นที่สำรวจ (ยิ่งสูงยิ่งแม่นยำ แต่ใช้เวลานาน)</li>
-                            <li>คลิก "คำนวณหาตำแหน่งที่ดีที่สุด" เพื่อเริ่มการคำนวณ</li>
-                            <li>รอผลลัพธ์และดูตำแหน่งที่แนะนำบนแผนที่</li>
+                            <li>คลิก "คำนวณหาตำแหน่งที่ดีที่สุด" เพื่อเริ่มการคำนวณด้วยอัลกอริธึม k-means</li>
+                            <li>รอผลลัพธ์ (โดยปกติจะเสร็จภายในไม่กี่วินาที)</li>
+                            <li>ดูตำแหน่งที่แนะนำบนแผนที่และพื้นที่ครอบคลุม (Voronoi regions)</li>
+                            <li>ตรวจสอบสถิติ: ระยะทางสูงสุดและเฉลี่ย</li>
                             <li>ส่งออกผลลัพธ์เป็นไฟล์ CSV หากต้องการ</li>
                         </ol>
                     </div>
@@ -725,41 +715,47 @@
 19.3500,98.0000</pre>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">การเลือกความละเอียดที่เหมาะสม:</h3>
-                        <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li><strong>ต่ำ (10x10):</strong> เหมาะสำหรับทดลองเร็ว หรือมีหมู่บ้านมาก</li>
-                            <li><strong>ปานกลาง (20x20):</strong> สมดุลระหว่างความเร็วและความแม่นยำ</li>
-                            <li><strong>สูง (30x30):</strong> ความแม่นยำสูง แต่ใช้เวลานาน</li>
-                            <li><strong>สูงมาก (40x40):</strong> ความแม่นยำสูงสุด ใช้เฉพาะเซ็นเซอร์น้อย</li>
+                        <h3 class="font-semibold text-gray-800 mb-2">เกี่ยวกับอัลกอริธึม:</h3>
+                        <p class="text-sm text-gray-600 mb-2">
+                            เครื่องมือนี้ใช้อัลกอริธึม <strong>k-means / Centroidal Voronoi Tessellation</strong> 
+                            เพื่อหาตำแหน่งติดตั้งเซ็นเซอร์ที่เหมาะสม โดย:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 ml-4 text-sm text-gray-600">
+                            <li>แต่ละรอบจะแบ่งหมู่บ้านให้กับเซ็นเซอร์ที่ใกล้ที่สุด (Voronoi partition)</li>
+                            <li>ย้ายเซ็นเซอร์ไปยังจุดศูนย์กลาง (centroid) ของหมู่บ้านที่รับผิดชอบ</li>
+                            <li>ทำซ้ำจนกว่าจะลู่เข้า (converge) หรือถึงจำนวนรอบสูงสุด</li>
+                            <li>เป้าหมาย: ลดผลรวมของระยะทางกำลังสอง (sum of squared distances)</li>
                         </ul>
+                        <p class="text-xs text-gray-500 mt-2">
+                            อัลกอริธึมนี้ให้ผลลัพธ์ที่ดีในภาพรวม แทนที่จะเน้นลดระยะทางไกลที่สุดเท่านั้น
+                        </p>
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-2">คำแนะนำการใช้งาน:</h3>
                         <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li>เซ็นเซอร์ 1-2 ตัว: ใช้ความละเอียดใดก็ได้</li>
-                            <li>เซ็นเซอร์ 3 ตัว: แนะนำความละเอียด 20x20 หรือ 30x30</li>
-                            <li>เซ็นเซอร์ 4-5 ตัว: แนะนำความละเอียด 10x10 หรือ 20x20</li>
-                            <li>เซ็นเซอร์ 6+ ตัว: แนะนำความละเอียด 10x10</li>
-                            <li>หมู่บ้านมาก (&gt;20): ลดความละเอียดหรือจำนวนเซ็นเซอร์</li>
+                            <li>อัลกอริธึมใหม่ทำงานเร็วและไม่ต้องตั้งค่าความละเอียด</li>
+                            <li>จำนวนเซ็นเซอร์ควรน้อยกว่าหรือเท่ากับจำนวนหมู่บ้าน</li>
+                            <li>หมู่บ้านมาก (&gt;50): การคำนวณอาจใช้เวลาสักครู่ แต่จะเสร็จภายในไม่กี่วินาที</li>
+                            <li>ผลลัพธ์จะแสดงระยะทางสูงสุดและระยะทางเฉลี่ยจากหมู่บ้านไปยังเซ็นเซอร์ที่ใกล้ที่สุด</li>
                         </ul>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">ฟีเจอร์ใหม่:</h3>
+                        <h3 class="font-semibold text-gray-800 mb-2">ฟีเจอร์:</h3>
                         <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li><strong>อัลกอริธึมอัจฉริยะ:</strong> สุ่มตัวอย่างอย่างมีระบบสำหรับปัญหาที่ซับซ้อน</li>
-                            <li><strong>การจำกัดเวลา:</strong> จำกัดเวลาคำนวณ 45 วินาทีเพื่อป้องกันค้าง</li>
-                            <li><strong>ตัวบ่งชี้ความคืบหน้า:</strong> แสดงสถานะการคำนวณแบบเรียลไทม์</li>
-                            <li><strong>การยกเลิกการคำนวณ:</strong> สามารถหยุดการคำนวณได้ทุกเมื่อ</li>
+                            <li><strong>อัลกอริธึม k-means:</strong> หาตำแหน่งที่เหมาะสมด้วยวิธี centroidal Voronoi</li>
+                            <li><strong>การลู่เข้าแบบอัตโนมัติ:</strong> หยุดเมื่อเซ็นเซอร์ไม่เคลื่อนที่มาก</li>
+                            <li><strong>การแสดงผล Voronoi:</strong> แสดงพื้นที่ครอบคลุมของแต่ละเซ็นเซอร์</li>
+                            <li><strong>สถิติการคำนวณ:</strong> แสดงระยะทางสูงสุดและเฉลี่ย</li>
                         </ul>
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-2">การแก้ไขปัญหาที่พบบ่อย:</h3>
                         <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li><strong>การคำนวณช้า:</strong> ลดความละเอียดกริดหรือจำนวนเซ็นเซอร์</li>
                             <li><strong>ไม่มีผลลัพธ์:</strong> ตรวจสอบว่ามีหมู่บ้านอย่างน้อย 1 แห่ง</li>
                             <li><strong>เซ็นเซอร์มากเกิน:</strong> จำนวนเซ็นเซอร์ควรน้อยกว่าหรือเท่ากับจำนวนหมู่บ้าน</li>
                             <li><strong>แผนที่ไม่แสดง:</strong> กดปุ่ม "แสดงทั้งหมด" เพื่อปรับมุมมอง</li>
                             <li><strong>อัปโหลด CSV ไม่ได้:</strong> ตรวจสอบรูปแบบไฟล์และชื่อคอลัมน์</li>
+                            <li><strong>Voronoi ไม่แสดง:</strong> กดปุ่มแสดง/ซ่อน Voronoi เพื่อเปิดการแสดงผล</li>
                         </ul>
                     </div>
                 </div>
@@ -795,9 +791,12 @@
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const calculationTimeEl = document.getElementById('calculationTime');
-        const totalCandidatesEl = document.getElementById('totalCandidates');
-        const totalCombinationsEl = document.getElementById('totalCombinations');
-        const processedCombinationsEl = document.getElementById('processedCombinations');
+        // Legacy UI elements (no longer used, but kept for backward compatibility)
+        // const totalCandidatesEl = document.getElementById('totalCandidates');
+        // const totalCombinationsEl = document.getElementById('totalCombinations');
+        // const processedCombinationsEl = document.getElementById('processedCombinations');
+        const maxDistanceKmEl = document.getElementById('maxDistanceKm');
+        const averageDistanceKmEl = document.getElementById('averageDistanceKm');
         const exportBtn = document.getElementById('exportBtn');
         const toggleVoronoiBtn = document.getElementById('toggleVoronoiBtn');
         const fitBoundsBtn = document.getElementById('fitBoundsBtn');
@@ -987,6 +986,259 @@
         }
 
         /**
+         * SENSOR PLACEMENT ALGORITHM: k-means / Centroidal Voronoi Tessellation with Least-Squares Centroids
+         * 
+         * This algorithm optimizes sensor locations using an iterative k-means-like approach
+         * combined with centroidal Voronoi tessellation. Unlike the previous k-center approach
+         * that minimized the worst-case distance, this method minimizes the sum of squared
+         * distances, providing better average performance across all villages.
+         * 
+         * Algorithm Overview:
+         * - Uses a k-means / centroidal Voronoi tessellation approach
+         * - Each iteration performs two steps:
+         *   (1) Assigns villages to nearest sensor (Voronoi partition)
+         *   (2) Moves each sensor to the least-squares center (centroid) of its assigned villages
+         * - Continues until convergence (sensor movement < tolerance) or max iterations reached
+         * - Objective: minimize sum of squared distances (good average performance),
+         *   instead of minimizing the worst-case distance as in the previous k-center approach
+         * 
+         * Initialization:
+         * - Uses k-means++ style initialization: first sensor is random, subsequent sensors
+         *   are placed at villages farthest from all previously chosen sensors
+         * 
+         * Convergence:
+         * - Algorithm converges when maximum sensor movement between iterations is below tolerance
+         * - This ensures sensors stabilize at optimal centroidal positions
+         * 
+         * @param {Array} villages - Array of village objects with { lat, lng } properties
+         * @param {number} numSensors - Number of sensors to place
+         * @param {Object} options - Optional configuration
+         * @param {number} options.maxIterations - Maximum iterations (default: 50)
+         * @param {number} options.tolerance - Convergence tolerance in km (default: 0.001 = 1 meter)
+         * @returns {Object} Result object with sensors, assignments, clusters, and metrics
+         */
+        function optimizeSensorsWithVoronoiLeastSquares(villages, numSensors, options = {}) {
+            // Validate inputs
+            if (!villages || villages.length === 0) {
+                throw new Error('Villages array is empty');
+            }
+            if (numSensors < 1 || numSensors > villages.length) {
+                throw new Error(`Invalid numSensors: ${numSensors} (must be 1-${villages.length})`);
+            }
+
+            // Set default options
+            const maxIterations = options.maxIterations || 50;
+            const tolerance = options.tolerance || 0.001; // 1 meter in km
+
+            // ============================================
+            // INITIALIZATION: k-means++ style
+            // ============================================
+            let sensors = [];
+            
+            // Pick first sensor randomly from villages
+            const firstIndex = Math.floor(Math.random() * villages.length);
+            sensors.push({
+                lat: villages[firstIndex].lat,
+                lng: villages[firstIndex].lng
+            });
+
+            // For each remaining sensor, pick the village farthest from all chosen sensors
+            for (let s = 1; s < numSensors; s++) {
+                let maxMinDistance = -1;
+                let bestVillageIndex = -1;
+
+                for (let v = 0; v < villages.length; v++) {
+                    // Find minimum distance from this village to any chosen sensor
+                    let minDistToSensors = Infinity;
+                    for (let i = 0; i < sensors.length; i++) {
+                        const dist = haversineDistance(villages[v], sensors[i]);
+                        if (dist < minDistToSensors) {
+                            minDistToSensors = dist;
+                        }
+                    }
+                    
+                    // If this village is farther from all sensors than previous best, choose it
+                    if (minDistToSensors > maxMinDistance) {
+                        maxMinDistance = minDistToSensors;
+                        bestVillageIndex = v;
+                    }
+                }
+
+                // Add the farthest village as next sensor
+                if (bestVillageIndex >= 0) {
+                    sensors.push({
+                        lat: villages[bestVillageIndex].lat,
+                        lng: villages[bestVillageIndex].lng
+                    });
+                } else {
+                    // Fallback: random selection if something went wrong
+                    const randomIndex = Math.floor(Math.random() * villages.length);
+                    sensors.push({
+                        lat: villages[randomIndex].lat,
+                        lng: villages[randomIndex].lng
+                    });
+                }
+            }
+
+            // ============================================
+            // ITERATIVE OPTIMIZATION: k-means style
+            // 
+            // Each iteration performs two main steps:
+            // (1) Voronoi Partition: Assign villages to nearest sensor
+            // (2) Centroid Update: Move each sensor to the least-squares center of its assigned villages
+            // 
+            // This minimizes the sum of squared distances, which provides good average performance.
+            // ============================================
+            for (let iter = 0; iter < maxIterations; iter++) {
+                // Store old sensor positions to check convergence
+                const oldSensors = sensors.map(s => ({ lat: s.lat, lng: s.lng }));
+
+                // STEP 1: Voronoi Partition
+                // Create clusters: array of arrays, one per sensor
+                // Each cluster contains indices of villages assigned to that sensor
+                const clusters = Array(numSensors).fill(null).map(() => []);
+                const assignments = []; // assignments[i] = sensor index for village i
+
+                // Assign each village to its nearest sensor (Voronoi partition)
+                for (let v = 0; v < villages.length; v++) {
+                    let nearestSensorIndex = 0;
+                    let minDistance = Infinity;
+
+                    // Find the nearest sensor to this village
+                    for (let s = 0; s < sensors.length; s++) {
+                        const dist = haversineDistance(villages[v], sensors[s]);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            nearestSensorIndex = s;
+                        }
+                    }
+
+                    // Assign village to its nearest sensor's cluster
+                    clusters[nearestSensorIndex].push(v); // Store village index
+                    assignments.push(nearestSensorIndex);
+                }
+
+                // STEP 2: Centroid Update (Least-Squares Center)
+                // Update each sensor to the centroid (geometric center) of its assigned villages
+                // The centroid minimizes the sum of squared distances to all villages in the cluster
+                for (let s = 0; s < sensors.length; s++) {
+                    if (clusters[s].length > 0) {
+                        // Compute centroid: average of all village positions in cluster
+                        // This is the least-squares center that minimizes sum of squared distances
+                        let sumLat = 0;
+                        let sumLng = 0;
+                        
+                        for (const villageIndex of clusters[s]) {
+                            sumLat += villages[villageIndex].lat;
+                            sumLng += villages[villageIndex].lng;
+                        }
+
+                        const centroidLat = sumLat / clusters[s].length;
+                        const centroidLng = sumLng / clusters[s].length;
+
+                        // Move sensor to the centroid of its cluster
+                        sensors[s] = {
+                            lat: centroidLat,
+                            lng: centroidLng
+                        };
+                    } else {
+                        // Handle empty cluster: move sensor to most underserved village
+                        // This prevents sensors from being unused
+                        let maxDistToAnySensor = -1;
+                        let mostUnderservedIndex = -1;
+
+                        for (let v = 0; v < villages.length; v++) {
+                            // Find minimum distance from this village to any sensor
+                            let minDistToSensors = Infinity;
+                            for (let i = 0; i < sensors.length; i++) {
+                                const dist = haversineDistance(villages[v], sensors[i]);
+                                if (dist < minDistToSensors) {
+                                    minDistToSensors = dist;
+                                }
+                            }
+
+                            // Track the village that is farthest from all sensors
+                            if (minDistToSensors > maxDistToAnySensor) {
+                                maxDistToAnySensor = minDistToSensors;
+                                mostUnderservedIndex = v;
+                            }
+                        }
+
+                        // Move empty sensor to most underserved village
+                        if (mostUnderservedIndex >= 0) {
+                            sensors[s] = {
+                                lat: villages[mostUnderservedIndex].lat,
+                                lng: villages[mostUnderservedIndex].lng
+                            };
+                        }
+                    }
+                }
+
+                // STEP 3: Convergence Check
+                // Compute maximum sensor movement between iterations
+                let maxMovement = 0;
+                for (let s = 0; s < sensors.length; s++) {
+                    const movement = haversineDistance(oldSensors[s], sensors[s]);
+                    if (movement > maxMovement) {
+                        maxMovement = movement;
+                    }
+                }
+
+                // If sensors moved less than tolerance, we've converged
+                // This means sensors have stabilized at optimal centroidal positions
+                if (maxMovement < tolerance) {
+                    console.log(`Converged after ${iter + 1} iterations (max movement: ${maxMovement.toFixed(6)} km)`);
+                    break;
+                }
+            }
+
+            // ============================================
+            // COMPUTE FINAL METRICS
+            // ============================================
+            let maxDistanceKm = 0;
+            let sumDistanceKm = 0;
+            const finalAssignments = [];
+            const finalClusters = Array(numSensors).fill(null).map(() => []);
+
+            for (let v = 0; v < villages.length; v++) {
+                let nearestSensorIndex = 0;
+                let minDistance = Infinity;
+
+                for (let s = 0; s < sensors.length; s++) {
+                    const dist = haversineDistance(villages[v], sensors[s]);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        nearestSensorIndex = s;
+                    }
+                }
+
+                finalAssignments.push(nearestSensorIndex);
+                finalClusters[nearestSensorIndex].push(v);
+
+                if (minDistance > maxDistanceKm) {
+                    maxDistanceKm = minDistance;
+                }
+                sumDistanceKm += minDistance;
+            }
+
+            const averageDistanceKm = sumDistanceKm / villages.length;
+
+            // ============================================
+            // RETURN RESULTS
+            // ============================================
+            return {
+                sensors: sensors,
+                assignments: finalAssignments,
+                clusters: finalClusters,
+                metrics: {
+                    maxDistanceKm: maxDistanceKm,
+                    averageDistanceKm: averageDistanceKm
+                }
+            };
+        }
+
+        /**
+         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
          * Calculates number of combinations C(n,k)
          */
         function calculateCombinations(n, k) {
@@ -1001,6 +1253,7 @@
         }
 
         /**
+         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
          * Generates combinations of k elements from an array.
          */
         function* getCombinations(arr, k) {
@@ -1018,6 +1271,7 @@
         }
 
         /**
+         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
          * Find best combination with timeout and progress tracking
          */
         function findBestCombinationWithTimeout(candidates, numSensors, villages, totalCombinations) {
@@ -1128,6 +1382,7 @@
         }
         
         /**
+         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
          * Smart sampling strategy for large problems - selects representative combinations
          */
         function* getSmartSampledCombinations(candidates, numSensors, maxSamples) {
@@ -1187,6 +1442,10 @@
             }
         }
 
+        /**
+         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
+         * Generates a grid of candidate points in the bounding box
+         */
         function generateCandidateGrid(points, dimension) {
             if (points.length === 0) return [];
 
@@ -1233,11 +1492,9 @@
             console.log('runOptimization called'); // Debug log
             clearResults();
             const numSensors = parseInt(numSensorsInput.value, 10);
-            const gridDim = parseInt(document.getElementById('gridDensity').value, 10);
 
             console.log('Villages count:', villages.length); // Debug log
             console.log('Num sensors:', numSensors); // Debug log
-            console.log('Grid dimension:', gridDim); // Debug log
 
             // Enhanced input validation
             if (villages.length === 0) {
@@ -1255,17 +1512,6 @@
                 return;
             }
 
-            // Check if calculation will be too complex - show info but don't block
-            const estimatedCombinations = calculateCombinations(gridDim * gridDim, numSensors);
-            console.log('Estimated combinations:', estimatedCombinations);
-            
-            // Show informative notifications without blocking
-            if (estimatedCombinations > 1000000) {
-                showNotification(`การคำนวณซับซ้อน (${estimatedCombinations.toLocaleString()} combinations) - ใช้อัลกอริธึมอัจฉริยะ`, 'info');
-            } else if (estimatedCombinations > 200000) {
-                showNotification(`กำลังคำนวณ ${estimatedCombinations.toLocaleString()} combinations - อาจใช้เวลาสักครู่`, 'info');
-            }
-
             calculationStartTime = Date.now();
             toggleLoading(true);
             resultsPanel.classList.add('hidden');
@@ -1273,51 +1519,31 @@
             // Using setTimeout to allow UI to update before heavy computation
             setTimeout(() => {
                 try {
-                    // 1. Generate Candidate Points
-                    updateProgress(10, 'กำลังสร้างกริดจุดสำรวจ...', '');
-                    const candidates = generateCandidateGrid(villages, gridDim);
-                    totalCandidatesEl.textContent = candidates.length;
+                    // ============================================
+                    // NEW ALGORITHM: k-means / Centroidal Voronoi with Least-Squares
+                    // ============================================
+                    updateProgress(10, 'กำลังเริ่มต้นอัลกอริธึม k-means...', '');
                     
-                    if (candidates.length < numSensors) {
-                        showNotification('เกิดข้อผิดพลาดในการสร้างกริดจุดสำรวจ กรุณาลองใหม่', 'error');
-                        toggleLoading(false);
-                        return;
-                    }
+                    // Call the new optimization function
+                    const result = optimizeSensorsWithVoronoiLeastSquares(villages, numSensors, {
+                        maxIterations: 30,
+                        tolerance: 0.001 // 1 meter in km
+                    });
 
-                    const totalCombinations = calculateCombinations(candidates.length, numSensors);
-                    updateProgress(20, 'กำลังคำนวณตำแหน่งที่ดีที่สุด...', 
-                        `กริด: ${candidates.length} จุด | Combinations: ${totalCombinations.toLocaleString()}`);
-
-                    // 2. Find Best Combination with timeout
-                    const result = findBestCombinationWithTimeout(candidates, numSensors, villages, totalCombinations);
-                    
                     updateProgress(100, 'การคำนวณเสร็จสิ้น!', '');
                     
+                    // Store results in global variables
+                    currentResults = result.sensors;
+                    // Note: result.assignments and result.clusters are also available if needed
+                    
+                    // Calculate computation time
+                    const calculationTime = ((Date.now() - calculationStartTime) / 1000).toFixed(2);
+                    
+                    // Display results
+                    displayResultsWithMetrics(result.sensors, result.metrics, calculationTime);
+                    
                     toggleLoading(false);
-                    if (result.cancelled) {
-                        showNotification('ยกเลิกการคำนวณแล้ว', 'info');
-                    } else if (result.success && result.bestCombination) {
-                        currentResults = result.bestCombination;
-                        const calculationTime = ((Date.now() - calculationStartTime) / 1000).toFixed(2);
-                        calculationTimeEl.textContent = calculationTime + ' วินาที';
-                        totalCombinationsEl.textContent = totalCombinations.toLocaleString();
-                        processedCombinationsEl.textContent = result.processedCombinations.toLocaleString();
-                        displayResults(result.bestCombination, result.bestScore);
-                        
-                        if (result.timeout) {
-                            showNotification(`คำนวณเสร็จสิ้น (จำกัดเวลา) - ประมวลผล ${result.processedCombinations.toLocaleString()} combinations`, 'info');
-                        } else {
-                            showNotification(`คำนวณเสร็จสิ้น! - ประมวลผล ${result.processedCombinations.toLocaleString()} combinations`, 'success');
-                        }
-                        
-                        if (result.usedSmartSampling) {
-                            showNotification('ใช้วิธีการสุ่มตัวอย่างอัจฉริยะเพื่อเพิ่มความเร็ว', 'info');
-                        }
-                    } else if (result.timeout) {
-                        showNotification('การคำนวณใช้เวลานานเกินไป กรุณาลดความละเอียดหรือจำนวนเซ็นเซอร์', 'error');
-                    } else {
-                        showNotification('ไม่สามารถหาผลลัพธ์ได้ กรุณาตรวจสอบข้อมูล', 'error');
-                    }
+                    showNotification(`คำนวณเสร็จสิ้น! - ระยะทางสูงสุด: ${result.metrics.maxDistanceKm.toFixed(2)} กม.`, 'success');
 
                 } catch (error) {
                     console.error('Calculation error:', error);
@@ -1366,6 +1592,58 @@
             updateCounts();
         }
 
+        /**
+         * Display results with new k-means algorithm metrics
+         * @param {Array} sensors - Array of sensor positions { lat, lng }
+         * @param {Object} metrics - Metrics object with maxDistanceKm and averageDistanceKm
+         * @param {string} calculationTime - Time taken in seconds
+         */
+        function displayResultsWithMetrics(sensors, metrics, calculationTime) {
+            clearResults();
+            
+            // Add sensor markers to map
+            let locationsHTML = '<div class="space-y-2">';
+            sensors.forEach((sensor, index) => {
+                L.marker([sensor.lat, sensor.lng], { icon: optimalIcon })
+                 .addTo(resultLayer)
+                 .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}`);
+                
+                locationsHTML += `
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div>
+                            <span class="font-medium text-gray-700">จุดที่ ${index + 1}</span>
+                            <div class="text-xs text-gray-500">${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}</div>
+                        </div>
+                        <button onclick="copyToClipboard('${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}')" class="text-blue-500 hover:text-blue-700" title="คัดลอกพิกัด">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            locationsHTML += '</div>';
+            optimalLocationsEl.innerHTML = locationsHTML;
+
+            // Draw Voronoi regions based on final sensor positions
+            // Note: Voronoi is used ONLY for visualization here. The actual optimization
+            // uses the k-means-like / least-squares centroid algorithm.
+            drawVoronoiForSensors(sensors);
+            
+            // Update result text with max distance
+            resultText.textContent = `ระยะทางสูงสุด: ${metrics.maxDistanceKm.toFixed(2)} กม.`;
+            
+            // Update statistics panel
+            calculationTimeEl.textContent = calculationTime + ' วินาที';
+            maxDistanceKmEl.textContent = metrics.maxDistanceKm.toFixed(2);
+            averageDistanceKmEl.textContent = metrics.averageDistanceKm.toFixed(2);
+            
+            resultsPanel.classList.remove('hidden');
+            updateCounts();
+        }
+
+        /**
+         * LEGACY FUNCTION (kept for backward compatibility, but not used by new algorithm)
+         * Old Voronoi drawing function that used map projection
+         */
         function drawVoronoi(points) {
             // Recalculate bounds to ensure Voronoi covers all points
             const allPoints = [...villages, ...points];
@@ -1408,6 +1686,81 @@
                         fillColor: colors(i),
                         fillOpacity: 0.15,
                         weight: 2
+                    }).addTo(voronoiLayer);
+                }
+            }
+        }
+
+        /**
+         * NEW FUNCTION: Draw Voronoi regions for final sensor positions
+         * 
+         * This function visualizes the Voronoi diagram based on the final sensor locations
+         * returned by optimizeSensorsWithVoronoiLeastSquares. The Voronoi cells represent
+         * the regions where each sensor is the nearest sensor.
+         * 
+         * Note: Voronoi is used ONLY for visualization here. The actual optimization
+         * uses the k-means-like / least-squares centroid algorithm implemented in
+         * optimizeSensorsWithVoronoiLeastSquares.
+         * 
+         * @param {Array} sensors - Array of sensor positions { lat, lng } from the optimization result
+         */
+        function drawVoronoiForSensors(sensors) {
+            // Clear any existing Voronoi layers
+            voronoiLayer.clearLayers();
+            
+            if (!sensors || sensors.length === 0) {
+                console.warn('No sensors provided for Voronoi visualization');
+                return;
+            }
+
+            // Compute bounding box for Voronoi diagram
+            // Use both villages and sensors to ensure full coverage
+            const allPoints = [...villages, ...sensors];
+            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+            
+            allPoints.forEach(p => {
+                if (p.lat < minLat) minLat = p.lat;
+                if (p.lat > maxLat) maxLat = p.lat;
+                if (p.lng < minLng) minLng = p.lng;
+                if (p.lng > maxLng) maxLng = p.lng;
+            });
+            
+            // Add padding to ensure Voronoi cells extend beyond the data points
+            const latPadding = (maxLat - minLat) * 0.2 || 0.1;
+            const lngPadding = (maxLng - minLng) * 0.2 || 0.1;
+            
+            minLat -= latPadding;
+            maxLat += latPadding;
+            minLng -= lngPadding;
+            maxLng += lngPadding;
+            
+            // Create Delaunay triangulation from sensor positions
+            // d3.Delaunay.from expects: from(data, xAccessor, yAccessor)
+            // For geographic coordinates: x = longitude, y = latitude
+            const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
+            
+            // Create Voronoi diagram with bounds [x0, y0, x1, y1] = [minLng, minLat, maxLng, maxLat]
+            const voronoi = delaunay.voronoi([minLng, minLat, maxLng, maxLat]);
+            
+            // Color scheme for Voronoi cells
+            const colors = d3.scaleOrdinal(d3.schemeCategory10);
+            
+            // Draw Voronoi cell for each sensor
+            for (let i = 0; i < sensors.length; i++) {
+                const cell = voronoi.cellPolygon(i);
+                
+                if (cell && cell.length > 0) {
+                    // Convert Voronoi polygon coordinates to Leaflet LatLng format
+                    // Voronoi returns [x, y] = [lng, lat] pairs, Leaflet needs [lat, lng]
+                    const latlngs = cell.map(point => [point[1], point[0]]); // [lat, lng] for Leaflet
+                    
+                    // Create and add polygon to Voronoi layer
+                    L.polygon(latlngs, {
+                        color: colors(i),
+                        fillColor: colors(i),
+                        fillOpacity: 0.15,
+                        weight: 2,
+                        opacity: 0.8
                     }).addTo(voronoiLayer);
                 }
             }
