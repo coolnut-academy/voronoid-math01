@@ -502,9 +502,9 @@
                     title="ตั้งค่า">
                     <i class="fas fa-cog"></i>
                 </button>
-                <button id="toggleLayoutBtn"
-                    class="md:hidden bg-blue-600 text-white px-3 py-2 rounded-lg shadow-lg text-xs hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-exchange-alt mr-1"></i>สลับตำแหน่ง
+                <button id="mobileMenuBtn"
+                    class="md:hidden p-2 text-gray-700 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-bars"></i>
                 </button>
             </div>
         </div>
@@ -515,18 +515,20 @@
 
     <div id="mainLayout" class="flex flex-col md:flex-row h-screen pt-16">
         <!-- Control Panel -->
-        <div class="w-full md:w-96 bg-white shadow-lg p-4 info-panel flex-shrink-0
+        <div id="controlPanel" class="w-full md:w-96 bg-white shadow-xl p-4 info-panel flex-shrink-0
             md:overflow-y-auto
-            fixed md:static top-16 left-0 z-20 h-full md:h-auto
-            transition-all duration-300
-            md:rounded-none rounded-b-2xl
+            fixed md:static top-16 left-0 z-40 h-full md:h-auto
+            transition-transform duration-300 ease-in-out
+            transform translate-x-[-100%] md:translate-x-0
+            md:rounded-none
             md:w-96 w-full
-            collapsed
             " style="height: calc(100vh - 64px);">
 
-            <!-- Mobile Panel Handle -->
-            <div class="md:hidden flex justify-center py-2 cursor-pointer" onclick="toggleMobilePanel()">
-                <div class="w-12 h-1 bg-gray-300 rounded-full"></div>
+            <!-- Mobile Panel Close Button -->
+            <div class="md:hidden flex justify-end mb-2">
+                <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-gray-600 p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
 
             <!-- Statistics Cards -->
@@ -697,6 +699,12 @@
                 <div class="bg-white p-3 rounded-lg border border-green-200 mb-3">
                     <p class="text-lg font-bold text-green-600" id="resultText"></p>
                 </div>
+
+                <!-- Convergence Graph -->
+                <div id="energyChartContainer" class="hidden mb-4 p-2 bg-white rounded border border-blue-100">
+                    <canvas id="energyChart" height="200"></canvas>
+                </div>
+
                 <div id="optimalLocations" class="text-sm text-gray-700"></div>
 
                 <!-- Performance Stats -->
@@ -759,6 +767,17 @@
                     class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
                     title="แสดงทั้งหมด">
                     <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <div class="h-px bg-gray-200 my-1"></div>
+                <button id="toggleDelaunayBtn"
+                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
+                    title="แสดง/ซ่อน Delaunay Network">
+                    <i class="fas fa-project-diagram"></i>
+                </button>
+                <button id="toggleCriticalBtn"
+                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
+                    title="แสดง/ซ่อน Critical Points">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </button>
             </div>
 
@@ -869,6 +888,13 @@
         let voronoiVisible = true;
         let calculationStartTime = 0;
         let calculationCancelled = false;
+
+        // Advanced Math Visualizations
+        let delaunayLayer = L.layerGroup();
+        let criticalPointsLayer = L.layerGroup();
+        let delaunayVisible = false;
+        let criticalPointsVisible = false;
+        let convergenceChart = null;
 
         // --- UI Elements ---
         const villageCountEl = document.getElementById('villageCount');
@@ -1297,22 +1323,17 @@
 
             // ============================================
             // ITERATIVE OPTIMIZATION: k-means style
-            // 
-            // Each iteration performs two main steps:
-            // (1) Voronoi Partition: Assign villages to nearest sensor
-            // (2) Centroid Update: Move each sensor to the least-squares center of its assigned villages
-            // 
-            // This minimizes the sum of squared distances, which provides good average performance.
             // ============================================
+            const energyHistory = [];
+
             for (let iter = 0; iter < maxIterations; iter++) {
                 // Store old sensor positions to check convergence
                 const oldSensors = sensors.map(s => ({ lat: s.lat, lng: s.lng }));
 
                 // STEP 1: Voronoi Partition
-                // Create clusters: array of arrays, one per sensor
-                // Each cluster contains indices of villages assigned to that sensor
                 const clusters = Array(numSensors).fill(null).map(() => []);
-                const assignments = []; // assignments[i] = sensor index for village i
+                const assignments = [];
+                let currentIterationEnergy = 0; // Sum of Squared Distances for this iteration
 
                 // Assign each village to its nearest sensor (Voronoi partition)
                 for (let v = 0; v < villages.length; v++) {
@@ -1329,9 +1350,15 @@
                     }
 
                     // Assign village to its nearest sensor's cluster
-                    clusters[nearestSensorIndex].push(v); // Store village index
+                    clusters[nearestSensorIndex].push(v);
                     assignments.push(nearestSensorIndex);
+
+                    // Accumulate Energy (SSD)
+                    currentIterationEnergy += (minDistance * minDistance);
                 }
+
+                // Record Energy for this iteration
+                energyHistory.push(currentIterationEnergy);
 
                 // STEP 2: Centroid Update (Least-Squares Center)
                 // Update each sensor to the centroid (geometric center) of its assigned villages
@@ -1447,7 +1474,8 @@
                 clusters: finalClusters,
                 metrics: {
                     maxDistanceKm: maxDistanceKm,
-                    averageDistanceKm: averageDistanceKm
+                    averageDistanceKm: averageDistanceKm,
+                    energyHistory: energyHistory
                 }
             };
         }
@@ -1729,7 +1757,13 @@
 
             calculationStartTime = Date.now();
             toggleLoading(true);
+            toggleLoading(true);
             resultsPanel.classList.add('hidden');
+
+            // Auto-close menu on mobile to show map
+            if (window.innerWidth < 768) {
+                toggleMobileMenu();
+            }
 
             // Using setTimeout to allow UI to update before heavy computation
             setTimeout(() => {
@@ -1853,6 +1887,88 @@
 
             resultsPanel.classList.remove('hidden');
             updateCounts();
+
+            // Draw Energy Convergence Graph
+            if (metrics.energyHistory && metrics.energyHistory.length > 0) {
+                drawConvergenceGraph(metrics.energyHistory);
+            }
+        }
+
+        function drawConvergenceGraph(history) {
+            const ctx = document.getElementById('energyChart').getContext('2d');
+            const container = document.getElementById('energyChartContainer');
+            if (!ctx || !container) return;
+
+            container.classList.remove('hidden');
+
+            if (convergenceChart) {
+                convergenceChart.destroy();
+            }
+
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            convergenceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map((_, i) => i + 1),
+                    datasets: [{
+                        label: 'Energy (Sum of Squared Distances)',
+                        data: history,
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#2563eb',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'การลู่เข้าสู่สมดุล (Convergence)'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `Energy: ${context.raw.toFixed(4)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'รอบการคำนวณ (Iteration)'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'ความคลาดเคลื่อนรวม (Energy)'
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         /**
@@ -1981,6 +2097,76 @@
             }
         }
 
+        /**
+         * Draw Delaunay Triangulation (Dual Graph of Voronoi)
+         */
+        function drawDelaunayForSensors(sensors) {
+            delaunayLayer.clearLayers();
+            if (!sensors || sensors.length < 3) return;
+
+            const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
+            const { triangles } = delaunay;
+
+            for (let i = 0; i < triangles.length; i += 3) {
+                const t0 = triangles[i];
+                const t1 = triangles[i + 1];
+                const t2 = triangles[i + 2];
+
+                // Draw lines between connected sensors
+                const p0 = [sensors[t0].lat, sensors[t0].lng];
+                const p1 = [sensors[t1].lat, sensors[t1].lng];
+                const p2 = [sensors[t2].lat, sensors[t2].lng];
+
+                L.polyline([p0, p1], { color: '#6366f1', weight: 1, opacity: 0.6, dashArray: '5, 5' }).addTo(delaunayLayer);
+                L.polyline([p1, p2], { color: '#6366f1', weight: 1, opacity: 0.6, dashArray: '5, 5' }).addTo(delaunayLayer);
+                L.polyline([p2, p0], { color: '#6366f1', weight: 1, opacity: 0.6, dashArray: '5, 5' }).addTo(delaunayLayer);
+            }
+        }
+
+        /**
+         * Draw Critical Points (Voronoi Vertices - Largest Empty Circle Centers)
+         */
+        function drawCriticalPoints(sensors) {
+            criticalPointsLayer.clearLayers();
+            if (!sensors || sensors.length < 2) return;
+
+            // Compute bounds to clip Voronoi
+            const allPoints = [...villages, ...sensors];
+            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+
+            allPoints.forEach(p => {
+                if (p.lat < minLat) minLat = p.lat;
+                if (p.lat > maxLat) maxLat = p.lat;
+                if (p.lng < minLng) minLng = p.lng;
+                if (p.lng > maxLng) maxLng = p.lng;
+            });
+
+            // Add slight padding
+            const latPadding = (maxLat - minLat) * 0.1;
+            const lngPadding = (maxLng - minLng) * 0.1;
+
+            const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
+            const voronoi = delaunay.voronoi([minLng - lngPadding, minLat - latPadding, maxLng + lngPadding, maxLat + latPadding]);
+
+            // Voronoi vertices are returned as [x, y] = [lng, lat]
+            // We need to filter those that are somewhat relevant or just show them all inside bounds
+            // circumcenters gives the vertices
+            const circumcenters = voronoi.circumcenters;
+
+            for (let i = 0; i < circumcenters.length; i += 2) {
+                const lng = circumcenters[i];
+                const lat = circumcenters[i + 1];
+
+                // Simple bounds check
+                if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+                    L.marker([lat, lng], { icon: criticalIcon })
+                        .bindPopup("Critical Point<br>(Voronoi Vertex)")
+                        .addTo(criticalPointsLayer);
+                }
+            }
+        }
+
+
         // --- New Features ---
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
@@ -2029,6 +2215,43 @@
             }
         }
 
+        function toggleDelaunay() {
+            delaunayVisible = !delaunayVisible;
+            const btn = document.getElementById('toggleDelaunayBtn');
+
+            if (delaunayVisible) {
+                // If we have current results, draw delaunay
+                if (currentResults) {
+                    drawDelaunayForSensors(currentResults);
+                }
+                delaunayLayer.addTo(map);
+                btn.classList.add('bg-blue-100', 'text-blue-600', 'border-blue-300');
+                btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+            } else {
+                map.removeLayer(delaunayLayer);
+                btn.classList.remove('bg-blue-100', 'text-blue-600', 'border-blue-300');
+                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+            }
+        }
+
+        function toggleCriticalPoints() {
+            criticalPointsVisible = !criticalPointsVisible;
+            const btn = document.getElementById('toggleCriticalBtn');
+
+            if (criticalPointsVisible) {
+                if (currentResults) {
+                    drawCriticalPoints(currentResults);
+                }
+                criticalPointsLayer.addTo(map);
+                btn.classList.add('bg-red-100', 'text-red-600', 'border-red-300');
+                btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+            } else {
+                map.removeLayer(criticalPointsLayer);
+                btn.classList.remove('bg-red-100', 'text-red-600', 'border-red-300');
+                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+            }
+        }
+
         function fitBounds() {
             if (villages.length === 0) {
                 showNotification('ไม่มีข้อมูลให้แสดง', 'error');
@@ -2049,35 +2272,19 @@
             helpModal.classList.add('hidden');
         }
 
-        function toggleMobilePanel() {
-            const panel = document.querySelector('.info-panel');
-            if (panel && window.innerWidth <= 768) {
-                if (panel.classList.contains('collapsed')) {
-                    panel.classList.remove('collapsed');
-                    panel.classList.add('expanded');
-                } else {
-                    panel.classList.remove('expanded');
-                    panel.classList.add('collapsed');
-                }
-            }
-        }
+        // Mobile Drawer Logic
+        function toggleMobileMenu() {
+            const panel = document.getElementById('controlPanel');
+            const isHidden = panel.classList.contains('translate-x-[-100%]');
 
-        // Enhanced mobile layout management
-        function updateMobileLayout() {
-            if (window.innerWidth <= 768) {
-                const panel = document.querySelector('.info-panel');
-                const mapContainer = document.getElementById('map-container');
-
-                if (panel && !panel.classList.contains('expanded') && !panel.classList.contains('collapsed')) {
-                    panel.classList.add('collapsed');
-                }
-
-                // Ensure map resizes properly on mobile
-                if (map && mapContainer) {
-                    setTimeout(() => {
-                        map.invalidateSize();
-                    }, 300);
-                }
+            if (isHidden) {
+                // Open Drawer
+                panel.classList.remove('translate-x-[-100%]');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            } else {
+                // Close Drawer
+                panel.classList.add('translate-x-[-100%]');
+                document.body.style.overflow = ''; // Restore scrolling
             }
         }
 
@@ -2109,11 +2316,23 @@
             if (clearVillagesBtn) clearVillagesBtn.addEventListener('click', clearVillages);
             if (exportBtn) exportBtn.addEventListener('click', exportResults);
             if (toggleVoronoiBtn) toggleVoronoiBtn.addEventListener('click', toggleVoronoi);
+
+            const toggleDelaunayBtn = document.getElementById('toggleDelaunayBtn');
+            if (toggleDelaunayBtn) toggleDelaunayBtn.addEventListener('click', toggleDelaunay);
+
+            const toggleCriticalBtn = document.getElementById('toggleCriticalBtn');
+            if (toggleCriticalBtn) toggleCriticalBtn.addEventListener('click', toggleCriticalPoints);
+
             if (fitBoundsBtn) fitBoundsBtn.addEventListener('click', fitBounds);
+            if (helpBtn) helpBtn.addEventListener('click', showHelp);
+            if (floatingHelpBtn) floatingHelpBtn.addEventListener('click', showHelp);
             if (helpBtn) helpBtn.addEventListener('click', showHelp);
             if (floatingHelpBtn) floatingHelpBtn.addEventListener('click', showHelp);
             if (closeHelpBtn) closeHelpBtn.addEventListener('click', hideHelp);
             if (cancelBtn) cancelBtn.addEventListener('click', cancelCalculation);
+
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         });
 
         // Close modal when clicking outside
@@ -2134,29 +2353,20 @@
             showNotification('ยินดีต้อนรับสู่เครื่องมือหาตำแหน่งติดตั้งเสาวัดระดับน้ำอัจฉริยะ!', 'info');
         }, 1000);
 
-        // Initialize mobile layout
-        updateMobileLayout();
+
 
         // Handle window resize events
         window.addEventListener('resize', () => {
-            updateMobileLayout();
-
-            // Invalidate map size after layout changes
-            if (map) {
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 100);
+            if (window.innerWidth > 768) {
+                // Reset panel state on desktop
+                const panel = document.getElementById('controlPanel');
+                panel.classList.remove('translate-x-[-100%]');
+                document.body.style.overflow = '';
             }
-        });
 
-        // Handle orientation changes on mobile
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                updateMobileLayout();
-                if (map) {
-                    map.invalidateSize();
-                }
-            }, 500);
+            if (map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
         });
     </script>
 </body>
