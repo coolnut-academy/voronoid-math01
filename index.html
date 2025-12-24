@@ -1892,6 +1892,9 @@
             if (metrics.energyHistory && metrics.energyHistory.length > 0) {
                 drawConvergenceGraph(metrics.energyHistory);
             }
+
+            // Auto-zoom to show results
+            fitBounds();
         }
 
         function drawConvergenceGraph(history) {
@@ -2253,15 +2256,22 @@
         }
 
         function fitBounds() {
-            if (villages.length === 0) {
-                showNotification('ไม่มีข้อมูลให้แสดง', 'error');
+            const allLayers = [
+                ...villageLayer.getLayers(),
+                ...resultLayer.getLayers()
+            ];
+
+            if (allLayers.length === 0) {
+                // Only show error if explicitly triggered by button, not auto-zoom
+                // But since we can't easily distinguish here, checking villages length is a proxy
+                if (villages.length === 0) {
+                    showNotification('ไม่มีข้อมูลให้แสดง', 'error');
+                }
                 return;
             }
 
-            const group = new L.featureGroup([villageLayer, resultLayer]);
-            if (group.getLayers().length > 0) {
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
+            const group = new L.featureGroup(allLayers);
+            map.fitBounds(group.getBounds().pad(0.1));
         }
 
         function showHelp() {
