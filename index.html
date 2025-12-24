@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -11,13 +13,16 @@
     <link rel="icon" type="image/png" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
     <link rel="apple-touch-icon" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
@@ -28,14 +33,17 @@
             text-size-adjust: 100%;
             /* ไม่ใช้ overflow: hidden เพื่อให้ scroll ได้บนมือถือ */
         }
+
         #map {
             height: 100%;
             width: 100%;
             cursor: crosshair;
         }
+
         .leaflet-container {
             background: #f0f9ff;
         }
+
         .info-panel {
             max-height: calc(100vh - 64px);
             overflow-y: auto !important;
@@ -45,25 +53,31 @@
             /* ให้แน่ใจว่า scroll ทำงานได้ทุกสถานการณ์ */
             scroll-behavior: smooth;
         }
+
         /* Custom scrollbar */
         .info-panel::-webkit-scrollbar {
             width: 6px;
         }
+
         .info-panel::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
+
         .info-panel::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 3px;
         }
+
         .info-panel::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+
         .legend-item {
             display: flex;
             align-items: center;
             margin-bottom: 0.5rem;
         }
+
         .legend-color {
             width: 20px;
             height: 20px;
@@ -103,9 +117,9 @@
             -ms-transform: translateY(-2px);
             transform: translateY(-2px);
             /* Fallback box-shadow */
-            -webkit-box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            -moz-box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            -webkit-box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            -moz-box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
         .progress-bar {
@@ -132,13 +146,18 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             animation: shimmer 2s infinite;
         }
 
         @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
         }
 
         .stat-card {
@@ -198,8 +217,10 @@
 
         /* Enhanced Mobile Responsive Design */
         @media (max-width: 768px) {
+
             /* Use more compatible viewport units */
-            body, html {
+            body,
+            html {
                 height: 100vh;
                 min-height: 100vh;
                 max-height: 100vh;
@@ -207,7 +228,7 @@
                 position: fixed;
                 width: 100%;
             }
-            
+
             /* Main layout for mobile */
             .flex-col {
                 flex-direction: column !important;
@@ -216,7 +237,7 @@
                 max-height: 100vh !important;
                 overflow: hidden;
             }
-            
+
             /* Fixed header height compensation */
             #mainLayout {
                 padding-top: 0 !important;
@@ -225,7 +246,7 @@
                 max-height: calc(100vh - 64px) !important;
                 margin-top: 64px;
             }
-            
+
             /* Mobile panel styling with better fallbacks */
             .info-panel {
                 position: fixed !important;
@@ -238,7 +259,7 @@
                 right: 0;
                 z-index: 30;
                 border-radius: 1rem 1rem 0 0;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
                 background: #ffffff;
                 transform: translateY(calc(100% - 60px));
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -248,15 +269,15 @@
                 overscroll-behavior: contain;
                 touch-action: pan-y;
             }
-            
+
             .info-panel.expanded {
                 transform: translateY(0);
             }
-            
+
             .info-panel.collapsed {
                 transform: translateY(calc(100% - 60px));
             }
-            
+
             /* Map container for mobile */
             #map-container {
                 width: 100% !important;
@@ -269,17 +290,17 @@
                 max-height: calc(100vh - 64px) !important;
                 z-index: 1;
             }
-            
+
             #map {
                 width: 100% !important;
                 height: 100% !important;
                 position: absolute;
-                top: 0; 
-                left: 0; 
-                right: 0; 
+                top: 0;
+                left: 0;
+                right: 0;
                 bottom: 0;
             }
-            
+
             /* Mobile-specific UI improvements */
             .floating-action {
                 bottom: 80px;
@@ -288,7 +309,7 @@
                 height: 48px;
                 font-size: 18px;
             }
-            
+
             .notification {
                 right: 12px;
                 left: 12px;
@@ -297,52 +318,57 @@
                 font-size: 14px;
                 padding: 12px 16px;
             }
-            
+
             .notification.show {
                 transform: translateY(0);
             }
-            
+
             /* Touch-friendly interactive elements */
             button {
                 min-height: 44px;
                 min-width: 44px;
                 touch-action: manipulation;
             }
-            
-            input, select {
+
+            input,
+            select {
                 min-height: 44px;
-                font-size: 16px; /* Prevent zoom on iOS */
+                font-size: 16px;
+                /* Prevent zoom on iOS */
             }
-            
+
             /* Better spacing for mobile */
-            .space-y-3 > * + * {
+            .space-y-3>*+* {
                 margin-top: 0.75rem;
             }
-            
-            .space-y-4 > * + * {
+
+            .space-y-4>*+* {
                 margin-top: 1rem;
             }
-            
+
             /* Improved card layout */
             .stat-card {
                 padding: 12px;
                 min-height: auto;
             }
-            
+
             /* Header adjustments for mobile */
             .fixed {
                 position: fixed !important;
             }
-            
+
             /* Panel handle visibility */
             .info-panel .md\\:hidden {
                 display: flex !important;
             }
         }
+
         /* Tablet and larger screens */
         @media (min-width: 769px) {
+
             /* Reset mobile-specific styles */
-            body, html {
+            body,
+            html {
                 height: auto;
                 min-height: 100vh;
                 max-height: none;
@@ -350,21 +376,21 @@
                 position: static;
                 width: auto;
             }
-            
+
             .flex-row {
                 flex-direction: row !important;
                 height: 100vh !important;
                 min-height: 100vh !important;
                 overflow: hidden;
             }
-            
+
             #mainLayout {
                 padding-top: 0 !important;
                 height: calc(100vh - 64px) !important;
                 margin-top: 64px;
                 overflow: hidden;
             }
-            
+
             .info-panel {
                 position: static !important;
                 width: 24rem !important;
@@ -372,7 +398,7 @@
                 min-height: calc(100vh - 64px) !important;
                 max-height: calc(100vh - 64px) !important;
                 border-radius: 0;
-                box-shadow: 2px 0 16px rgba(0,0,0,0.08);
+                box-shadow: 2px 0 16px rgba(0, 0, 0, 0.08);
                 background: #fff;
                 overflow-y: auto !important;
                 overflow-x: hidden;
@@ -383,7 +409,7 @@
                 right: auto;
                 z-index: auto;
             }
-            
+
             #map-container {
                 height: calc(100vh - 64px) !important;
                 min-height: calc(100vh - 64px) !important;
@@ -394,13 +420,13 @@
                 right: auto !important;
                 z-index: auto;
             }
-            
+
             #map {
                 height: 100% !important;
                 width: 100% !important;
                 position: static;
             }
-            
+
             /* Reset mobile-specific UI elements */
             .floating-action {
                 bottom: 20px;
@@ -409,7 +435,7 @@
                 height: 60px;
                 font-size: 20px;
             }
-            
+
             .notification {
                 right: 20px;
                 left: auto;
@@ -418,19 +444,19 @@
                 font-size: 16px;
                 padding: 16px 20px;
             }
-            
+
             .notification.show {
                 transform: translateX(0);
             }
         }
-        
+
         /* Large screens optimization */
         @media (min-width: 1200px) {
             .info-panel {
                 width: 28rem !important;
             }
         }
-        
+
         /* Small tablets in landscape */
         @media (min-width: 769px) and (max-width: 1024px) {
             .info-panel {
@@ -440,8 +466,11 @@
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Kanit:wght@400;500;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body class="bg-gray-100">
 
     <!-- Enhanced Header with Navigation -->
@@ -449,11 +478,11 @@
         <div class="flex items-center justify-between px-4 py-3">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white shadow-sm">
-                    <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png" 
-                         alt="Hong Son Logo" 
-                         class="w-full h-full object-contain"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg hidden items-center justify-center">
+                    <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png" alt="Hong Son Logo"
+                        class="w-full h-full object-contain"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div
+                        class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg hidden items-center justify-center">
                         <i class="fas fa-water text-white text-lg"></i>
                     </div>
                 </div>
@@ -463,13 +492,18 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <button id="helpBtn" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="ช่วยเหลือ">
+                <button id="helpBtn"
+                    class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="ช่วยเหลือ">
                     <i class="fas fa-question-circle"></i>
                 </button>
-                <button id="settingsBtn" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="ตั้งค่า">
+                <button id="settingsBtn"
+                    class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="ตั้งค่า">
                     <i class="fas fa-cog"></i>
                 </button>
-                <button id="toggleLayoutBtn" class="md:hidden bg-blue-600 text-white px-3 py-2 rounded-lg shadow-lg text-xs hover:bg-blue-700 transition-colors">
+                <button id="toggleLayoutBtn"
+                    class="md:hidden bg-blue-600 text-white px-3 py-2 rounded-lg shadow-lg text-xs hover:bg-blue-700 transition-colors">
                     <i class="fas fa-exchange-alt mr-1"></i>สลับตำแหน่ง
                 </button>
             </div>
@@ -488,15 +522,13 @@
             md:rounded-none rounded-b-2xl
             md:w-96 w-full
             collapsed
-            "
-            style="height: calc(100vh - 64px);"
-            >
-            
+            " style="height: calc(100vh - 64px);">
+
             <!-- Mobile Panel Handle -->
             <div class="md:hidden flex justify-center py-2 cursor-pointer" onclick="toggleMobilePanel()">
                 <div class="w-12 h-1 bg-gray-300 rounded-full"></div>
             </div>
-            
+
             <!-- Statistics Cards -->
             <div class="grid grid-cols-2 gap-3 mb-6">
                 <div class="stat-card p-3 rounded-lg card-hover">
@@ -511,7 +543,7 @@
                 <div class="stat-card p-3 rounded-lg card-hover">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">เซ็นเซอร์</p>
+                            <p class="text-xs text-gray-500">Sensor Gateways</p>
                             <p class="text-lg font-bold text-green-600" id="sensorCount">0</p>
                         </div>
                         <i class="fas fa-satellite-dish text-green-500"></i>
@@ -520,68 +552,113 @@
             </div>
 
             <!-- Step 1: Add Villages -->
-            <div class="my-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 card-hover">
+            <!-- Step 1: Add Villages (Tabbed Interface) -->
+            <div
+                class="my-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 card-hover">
                 <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">1</div>
-                    <h2 class="font-bold text-lg text-gray-700">เพิ่มหมู่บ้าน</h2>
+                    <div
+                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                        1</div>
+                    <h2 class="font-bold text-lg text-gray-700">เพิ่มหมู่บ้าน (Add Villages)</h2>
                 </div>
-                <p class="text-sm text-gray-600 mb-4">คลิกบนแผนที่เพื่อเพิ่มตำแหน่งหมู่บ้าน หรืออัปโหลดไฟล์ CSV</p>
-                
-                <!-- CSV Format Instructions -->
-                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center">
-                        <i class="fas fa-info-circle mr-1"></i>รูปแบบไฟล์ CSV ที่ถูกต้อง:
-                    </h4>
-                    <div class="text-xs text-blue-700 space-y-1">
-                        <p>• ต้องมีคอลัมน์ <code class="bg-blue-100 px-1 rounded">latitude</code> และ <code class="bg-blue-100 px-1 rounded">longitude</code></p>
-                        <p>• บรรทัดแรกเป็นหัวตาราง (header)</p>
-                        <p>• ข้อมูลพิกัดเป็นตัวเลขทศนิยม</p>
-                    </div>
-                    <div class="mt-2 text-xs">
-                        <p class="text-blue-600 font-medium">ตัวอย่าง:</p>
-                        <pre class="bg-blue-100 p-2 rounded text-xs mt-1 overflow-x-auto">latitude,longitude
-19.3015,97.9646
-19.3500,98.0000
-19.2800,97.9200</pre>
-                    </div>
-                </div>
-                
-                <div class="space-y-3">
-                    <input type="file" id="csvVillages" accept=".csv" class="hidden">
-                    <button onclick="document.getElementById('csvVillages').click()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md">
-                        <i class="fas fa-upload mr-2"></i>อัปโหลด CSV หมู่บ้าน
+
+                <!-- Tabs -->
+                <div class="flex space-x-2 mb-4">
+                    <button id="tabManual" onclick="switchTab('manual')"
+                        class="flex-1 py-2 px-3 text-sm font-medium rounded-lg bg-blue-600 text-white shadow-sm transition-all focus:outline-none">
+                        <i class="fas fa-keyboard mr-1"></i> กรอกเอง
                     </button>
-                    <button id="clearVillagesBtn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors">
-                        <i class="fas fa-trash mr-2"></i>ล้างหมู่บ้านทั้งหมด
+                    <button id="tabCSV" onclick="switchTab('csv')"
+                        class="flex-1 py-2 px-3 text-sm font-medium rounded-lg bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all focus:outline-none">
+                        <i class="fas fa-file-csv mr-1"></i> ไฟล์ CSV
                     </button>
                 </div>
+
+                <!-- Tab Content: Manual Input -->
+                <div id="panelManual" class="block">
+                    <p class="text-sm text-gray-600 mb-3">เพิ่มพิกัดหมู่บ้านด้วยตัวเอง (Latitude, Longitude)
+                        หรือคลิกบนแผนที่</p>
+
+                    <div class="max-h-48 overflow-y-auto mb-3 pr-1 space-y-2" id="villageList">
+                        <!-- Dynamic Input Rows will go here -->
+                        <div class="text-center text-gray-400 text-sm py-4">ยังไม่มีข้อมูลหมู่บ้าน</div>
+                    </div>
+
+                    <button onclick="addNewVillageInput()"
+                        class="w-full bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg text-sm transition-colors border-dashed">
+                        <i class="fas fa-plus mr-1"></i> เพิ่มแถวรายการ
+                    </button>
+                </div>
+
+                <!-- Tab Content: CSV Input -->
+                <div id="panelCSV" class="hidden">
+                    <p class="text-sm text-gray-600 mb-4">อัปโหลดไฟล์ (.csv) ที่มีคอลัมน์ latitude, longitude</p>
+
+                    <!-- CSV Format Instructions -->
+                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center">
+                            <i class="fas fa-info-circle mr-1"></i>ตัวอย่างรูปแบบไฟล์:
+                        </h4>
+                        <div class="text-xs text-blue-700 space-y-1 mb-2">
+                            <p>ต้องมี Header: <code class="bg-blue-100 px-1 rounded">latitude</code>, <code
+                                    class="bg-blue-100 px-1 rounded">longitude</code></p>
+                        </div>
+                        <button onclick="downloadCSVTemplate()"
+                            class="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded transition-colors">
+                            <i class="fas fa-download mr-1"></i> ดาวโหลดตัวอย่างไฟล์
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <input type="file" id="csvVillages" accept=".csv" class="hidden"
+                            onchange="handleFileUpload(event)">
+                        <button onclick="document.getElementById('csvVillages').click()"
+                            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md">
+                            <i class="fas fa-upload mr-2"></i>อัปโหลด CSV หมู่บ้าน
+                        </button>
+                    </div>
+                </div>
+
+                <button id="clearVillagesBtn"
+                    class="mt-4 w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-trash mr-2"></i>ล้างหมู่บ้านทั้งหมด
+                </button>
             </div>
 
             <!-- Step 2: Configuration & Run -->
-            <div class="my-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 card-hover">
+            <div
+                class="my-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 card-hover">
                 <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">2</div>
+                    <div
+                        class="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                        2</div>
                     <h2 class="font-bold text-lg text-gray-700">ตั้งค่าและคำนวณ</h2>
                 </div>
                 <div class="space-y-4">
                     <div>
                         <label for="numSensors" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-satellite-dish text-purple-500 mr-1"></i>จำนวนเซ็นเซอร์ที่จะติดตั้ง:
+                            <i class="fas fa-network-wired text-purple-500 mr-1"></i>จำนวน Sensor Gateway (Hub):
                         </label>
-                        <input type="number" id="numSensors" value="3" min="1" max="10" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors">
+                        <input type="number" id="numSensors" value="3" min="1" max="10"
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors">
                         <p class="text-xs text-gray-500 mt-1 flex items-center">
-                            <i class="fas fa-info-circle mr-1"></i>ใช้อัลกอริธึม k-means / Centroidal Voronoi เพื่อหาตำแหน่งที่เหมาะสม
+                            <i class="fas fa-info-circle mr-1"></i>ระบบจะหาจุดศูนย์กลาง (Centroid) เพื่อวาง Gateway
+                            เชื่อมต่ออุปกรณ์
                         </p>
                     </div>
                 </div>
                 <div class="mt-6 space-y-3">
-                    <button id="runBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                    <button id="runBtn"
+                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
                         <span id="runBtnText">
-                            <i class="fas fa-calculator mr-2"></i>คำนวณหาตำแหน่งที่ดีที่สุด
+                            <i class="fas fa-calculator mr-2"></i>คำนวณตำแหน่ง Gateway
                         </span>
-                        <div id="loadingSpinner" class="hidden w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mx-auto"></div>
+                        <div id="loadingSpinner"
+                            class="hidden w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mx-auto">
+                        </div>
                     </button>
-                    <button id="cancelBtn" class="hidden w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    <button id="cancelBtn"
+                        class="hidden w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                         <i class="fas fa-stop mr-2"></i>ยกเลิกการคำนวณ
                     </button>
                     <div class="progress-bar hidden" id="progressBar">
@@ -591,31 +668,37 @@
                         <div id="progressText">กำลังคำนวณ...</div>
                         <div id="progressDetails" class="text-xs text-gray-500 mt-1"></div>
                     </div>
-                    <button id="resetBtn" class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    <button id="resetBtn"
+                        class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                         <i class="fas fa-trash-alt mr-2"></i>ล้างข้อมูลทั้งหมด
                     </button>
                 </div>
             </div>
 
             <!-- Results -->
-            <div id="resultsPanel" class="my-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 card-hover hidden">
+            <div id="resultsPanel"
+                class="my-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 card-hover hidden">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center">
-                        <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">✓</div>
+                        <div
+                            class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                            ✓</div>
                         <h2 class="font-bold text-lg text-gray-700">ผลการคำนวณ</h2>
                     </div>
-                    <button id="exportBtn" class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors" title="ส่งออกผลลัพธ์">
+                    <button id="exportBtn"
+                        class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
+                        title="ส่งออกผลลัพธ์">
                         <i class="fas fa-download"></i>
                     </button>
                 </div>
                 <p class="text-sm text-gray-600 mb-3 flex items-center">
-                    <i class="fas fa-target text-green-500 mr-1"></i>เกณฑ์: k-means / Centroidal Voronoi (Least-Squares Centroids)
+                    <i class="fas fa-target text-green-500 mr-1"></i>ผลลัพธ์: ตำแหน่ง Gateway ที่เหมาะสมที่สุด
                 </p>
                 <div class="bg-white p-3 rounded-lg border border-green-200 mb-3">
                     <p class="text-lg font-bold text-green-600" id="resultText"></p>
                 </div>
                 <div id="optimalLocations" class="text-sm text-gray-700"></div>
-                
+
                 <!-- Performance Stats -->
                 <div class="mt-4 p-3 bg-white rounded-lg border border-green-200">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
@@ -629,9 +712,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Legend -->
-            <div class="my-4 p-4 bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl border border-gray-200 card-hover">
+            <div
+                class="my-4 p-4 bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl border border-gray-200 card-hover">
                 <h2 class="font-bold text-lg text-gray-700 mb-3 flex items-center">
                     <i class="fas fa-map-marked-alt text-gray-500 mr-2"></i>คำอธิบายสัญลักษณ์
                 </h2>
@@ -642,35 +726,45 @@
                     </div>
                     <div class="legend-item">
                         <div style="width: 20px; height: 20px; margin-right: 10px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" class="w-full h-full"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444"
+                                class="w-full h-full">
+                                <path
+                                    d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                            </svg>
                         </div>
-                        <span class="text-sm">ตำแหน่งติดตั้งที่ดีที่สุด</span>
+                        <span class="text-sm">Sensor Gateway (Hub)</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background-color: rgba(59, 130, 246, 0.15); border: 2px solid #3b82f6;"></div>
+                        <div class="legend-color"
+                            style="background-color: rgba(59, 130, 246, 0.15); border: 2px solid #3b82f6;"></div>
                         <span class="text-sm">พื้นที่ครอบคลุม (Voronoi)</span>
                     </div>
                 </div>
             </div>
 
         </div>
-        
+
         <!-- Map -->
         <div id="map-container" class="flex-grow relative md:static md:h-auto h-[calc(100vh-64px)]">
             <div id="map" class="absolute inset-0 md:static md:h-full h-full"></div>
-            
+
             <!-- Map Controls -->
             <div class="absolute top-4 left-4 z-10 space-y-2">
-                <button id="toggleVoronoiBtn" class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors" title="แสดง/ซ่อน Voronoi">
+                <button id="toggleVoronoiBtn"
+                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
+                    title="แสดง/ซ่อน Voronoi">
                     <i class="fas fa-layer-group"></i>
                 </button>
-                <button id="fitBoundsBtn" class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors" title="แสดงทั้งหมด">
+                <button id="fitBoundsBtn"
+                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
+                    title="แสดงทั้งหมด">
                     <i class="fas fa-expand-arrows-alt"></i>
                 </button>
             </div>
-            
+
             <!-- Map Info -->
-            <div class="absolute bottom-4 left-4 z-10 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200">
+            <div
+                class="absolute bottom-4 left-4 z-10 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200">
                 <div class="text-xs text-gray-600">
                     <div>คลิกเพื่อเพิ่มหมู่บ้าน</div>
                     <div>ใช้เมาส์ลากเพื่อเลื่อนแผนที่</div>
@@ -698,33 +792,33 @@
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-2">ขั้นตอนการใช้งาน:</h3>
                         <ol class="list-decimal list-inside space-y-1 ml-4">
-                            <li>เพิ่มตำแหน่งหมู่บ้านโดยคลิกบนแผนที่หรืออัปโหลดไฟล์ CSV</li>
-                            <li>กำหนดจำนวนเซ็นเซอร์ที่ต้องการติดตั้ง (1-10 ตัว)</li>
-                            <li>คลิก "คำนวณหาตำแหน่งที่ดีที่สุด" เพื่อเริ่มการคำนวณด้วยอัลกอริธึม k-means</li>
-                            <li>รอผลลัพธ์ (โดยปกติจะเสร็จภายในไม่กี่วินาที)</li>
+                            <li>เลือกโหมด: <strong>กรอกเอง</strong> หรือ <strong>ไฟล์ CSV</strong></li>
+                            <li>เพิ่มตำแหน่งหมู่บ้านตามโหมดที่เลือก</li>
+                            <li>กำหนดจำนวน <strong>Sensor Gateway</strong> ที่ต้องการติดตั้ง</li>
+                            <li>คลิก "คำนวณตำแหน่ง Gateway"</li>
+                            <li>ระบบจะหาจุดศูนย์กลาง (Hub) ที่ครอบคลุมหมู่บ้านได้ดีที่สุด</li>
                             <li>ดูตำแหน่งที่แนะนำบนแผนที่และพื้นที่ครอบคลุม (Voronoi regions)</li>
                             <li>ตรวจสอบสถิติ: ระยะทางสูงสุดและเฉลี่ย</li>
                             <li>ส่งออกผลลัพธ์เป็นไฟล์ CSV หากต้องการ</li>
                         </ol>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">รูปแบบไฟล์ CSV:</h3>
-                        <p>ไฟล์ต้องมีคอลัมน์ "latitude" และ "longitude"</p>
-                        <pre class="bg-gray-100 p-2 rounded text-xs mt-1">latitude,longitude
-19.3015,97.9646
-19.3500,98.0000</pre>
+                        <h3 class="font-semibold text-gray-800 mb-2">Sensor Gateway คืออะไร?</h3>
+                        <p class="text-sm text-gray-600 mb-2">
+                            คือสถานีแม่ข่าย (Hub) ที่ทำหน้าที่รวบรวมสัญญาณจาก Sensor รอบข้าง โดยจะติดตั้ง ณ จุดกึ่งกลาง
+                            (Centroid) ของกลุ่มหมู่บ้านที่เป็น Family เดียวกัน
+                        </p>
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-2">เกี่ยวกับอัลกอริธึม:</h3>
                         <p class="text-sm text-gray-600 mb-2">
-                            เครื่องมือนี้ใช้อัลกอริธึม <strong>k-means / Centroidal Voronoi Tessellation</strong> 
-                            เพื่อหาตำแหน่งติดตั้งเซ็นเซอร์ที่เหมาะสม โดย:
+                            เครื่องมือนี้ใช้อัลกอริธึม <strong>k-means / Centroidal Voronoi Tessellation</strong>
+                            เพื่อหาตำแหน่งติดตั้ง Gateway (Hub) ที่จุดศูนย์ถ่วงของกลุ่มหมู่บ้าน:
                         </p>
                         <ul class="list-disc list-inside space-y-1 ml-4 text-sm text-gray-600">
-                            <li>แต่ละรอบจะแบ่งหมู่บ้านให้กับเซ็นเซอร์ที่ใกล้ที่สุด (Voronoi partition)</li>
-                            <li>ย้ายเซ็นเซอร์ไปยังจุดศูนย์กลาง (centroid) ของหมู่บ้านที่รับผิดชอบ</li>
-                            <li>ทำซ้ำจนกว่าจะลู่เข้า (converge) หรือถึงจำนวนรอบสูงสุด</li>
-                            <li>เป้าหมาย: ลดผลรวมของระยะทางกำลังสอง (sum of squared distances)</li>
+                            <li>จัดกลุ่มหมู่บ้าน (Clustering) ให้กับ Gateway ที่ใกล้ที่สุด</li>
+                            <li>ย้าย Gateway ไปยัง "จุดกึ่งกลางทางภูมิศาสตร์" ของกลุ่มนั้นๆ</li>
+                            <li>ทำซ้ำจนกว่าตำแหน่งจะสมดุล</li>
                         </ul>
                         <p class="text-xs text-gray-500 mt-2">
                             อัลกอริธึมนี้ให้ผลลัพธ์ที่ดีในภาพรวม แทนที่จะเน้นลดระยะทางไกลที่สุดเท่านั้น
@@ -733,10 +827,9 @@
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-2">คำแนะนำการใช้งาน:</h3>
                         <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li>อัลกอริธึมใหม่ทำงานเร็วและไม่ต้องตั้งค่าความละเอียด</li>
-                            <li>จำนวนเซ็นเซอร์ควรน้อยกว่าหรือเท่ากับจำนวนหมู่บ้าน</li>
-                            <li>หมู่บ้านมาก (&gt;50): การคำนวณอาจใช้เวลาสักครู่ แต่จะเสร็จภายในไม่กี่วินาที</li>
-                            <li>ผลลัพธ์จะแสดงระยะทางสูงสุดและระยะทางเฉลี่ยจากหมู่บ้านไปยังเซ็นเซอร์ที่ใกล้ที่สุด</li>
+                            <li>จำนวน Gateway ควรน้อยกว่าจำนวนหมู่บ้าน</li>
+                            <li>หากต้องการเพิ่มหมู่บ้านทีละเยอะๆ แนะนำให้ใช้โหมด CSV</li>
+                            <li>กด "ดาวน์โหลดตัวอย่างไฟล์" ในแท็บ CSV เพื่อดูรูปแบบที่ถูกต้อง</li>
                         </ul>
                     </div>
                     <div>
@@ -752,7 +845,8 @@
                         <h3 class="font-semibold text-gray-800 mb-2">การแก้ไขปัญหาที่พบบ่อย:</h3>
                         <ul class="list-disc list-inside space-y-1 ml-4">
                             <li><strong>ไม่มีผลลัพธ์:</strong> ตรวจสอบว่ามีหมู่บ้านอย่างน้อย 1 แห่ง</li>
-                            <li><strong>เซ็นเซอร์มากเกิน:</strong> จำนวนเซ็นเซอร์ควรน้อยกว่าหรือเท่ากับจำนวนหมู่บ้าน</li>
+                            <li><strong>เซ็นเซอร์มากเกิน:</strong> จำนวนเซ็นเซอร์ควรน้อยกว่าหรือเท่ากับจำนวนหมู่บ้าน
+                            </li>
                             <li><strong>แผนที่ไม่แสดง:</strong> กดปุ่ม "แสดงทั้งหมด" เพื่อปรับมุมมอง</li>
                             <li><strong>อัปโหลด CSV ไม่ได้:</strong> ตรวจสอบรูปแบบไฟล์และชื่อคอลัมน์</li>
                             <li><strong>Voronoi ไม่แสดง:</strong> กดปุ่มแสดง/ซ่อน Voronoi เพื่อเปิดการแสดงผล</li>
@@ -809,6 +903,13 @@
         const progressText = document.getElementById('progressText');
         const progressDetails = document.getElementById('progressDetails');
 
+        // Tab Elements
+        const tabManual = document.getElementById('tabManual');
+        const tabCSV = document.getElementById('tabCSV');
+        const panelManual = document.getElementById('panelManual');
+        const panelCSV = document.getElementById('panelCSV');
+        const villageList = document.getElementById('villageList');
+
         // --- Map Icons ---
         const villageIcon = L.divIcon({
             html: `<div class="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-md"></div>`,
@@ -831,7 +932,7 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-            
+
             villageLayer.addTo(map);
             resultLayer.addTo(map);
             voronoiLayer.addTo(map);
@@ -850,12 +951,122 @@
             notification.className = `notification ${type}`;
             notification.textContent = message;
             document.getElementById('notificationContainer').appendChild(notification);
-            
+
             setTimeout(() => notification.classList.add('show'), 100);
             setTimeout(() => {
                 notification.classList.remove('show');
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tab) {
+            if (tab === 'manual') {
+                tabManual.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
+                tabManual.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+
+                tabCSV.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
+                tabCSV.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+
+                panelManual.classList.remove('hidden');
+                panelManual.classList.add('block');
+                panelCSV.classList.add('hidden');
+                panelCSV.classList.remove('block');
+
+                // Re-render list when switching to manual
+                renderVillageList();
+            } else {
+                tabCSV.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
+                tabCSV.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+
+                tabManual.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
+                tabManual.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+
+                panelCSV.classList.remove('hidden');
+                panelCSV.classList.add('block');
+                panelManual.classList.add('hidden');
+                panelManual.classList.remove('block');
+            }
+        }
+
+        function renderVillageList() {
+            villageList.innerHTML = '';
+
+            if (villages.length === 0) {
+                villageList.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">ยังไม่มีข้อมูลหมู่บ้าน</div>';
+                return;
+            }
+
+            villages.forEach((v, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center space-x-2 bg-gray-50 p-2 rounded border border-gray-200';
+                row.innerHTML = `
+                    <div class="text-xs text-gray-500 w-6 text-center">#${index + 1}</div>
+                    <input type="number" step="0.0001" value="${v.lat}" 
+                        onchange="updateVillage(${index}, 'lat', this.value)"
+                        class="flex-1 w-20 px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Lat">
+                    <input type="number" step="0.0001" value="${v.lng}" 
+                        onchange="updateVillage(${index}, 'lng', this.value)"
+                        class="flex-1 w-20 px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Lng">
+                    <button onclick="removeVillage(${index})" class="text-red-400 hover:text-red-600 p-1">
+                        <i class="fas fa-times"></i>
+                    </button>
+                 `;
+                villageList.appendChild(row);
+            });
+        }
+
+        function addNewVillageInput() {
+            // Default to map center or nearby last village
+            let lat = 19.3015;
+            let lng = 97.9646;
+
+            if (villages.length > 0) {
+                lat = villages[villages.length - 1].lat + 0.01;
+                lng = villages[villages.length - 1].lng + 0.01;
+            }
+
+            addVillage(L.latLng(lat, lng), false); // Pass false to suppress notification if desired
+        }
+
+        function updateVillage(index, field, value) {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+
+            if (field === 'lat') villages[index].lat = val;
+            if (field === 'lng') villages[index].lng = val;
+
+            // Re-render markers (efficient enough for <100 points)
+            refreshMapMarkers();
+        }
+
+        function removeVillage(index) {
+            villages.splice(index, 1);
+            refreshMapMarkers();
+            renderVillageList();
+            updateCounts();
+        }
+
+        function refreshMapMarkers() {
+            villageLayer.clearLayers();
+            villages.forEach((v, i) => {
+                const marker = L.marker([v.lat, v.lng], { icon: villageIcon }).addTo(villageLayer);
+                marker.bindPopup(`หมู่บ้าน #${i + 1}<br>Lat: ${v.lat.toFixed(4)}<br>Lng: ${v.lng.toFixed(4)}`);
+            });
+        }
+
+        function downloadCSVTemplate() {
+            const csvContent = "data:text/csv;charset=utf-8," + "latitude,longitude\n19.3015,97.9646\n19.3500,98.0000";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "template_villages.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function updateProgress(percent, text = '', details = '') {
@@ -888,15 +1099,16 @@
             calculationCancelled = true;
             showNotification('กำลังยกเลิกการคำนวณ...', 'info');
         }
-        
+
         // --- Data Handling ---
-        function addVillage(latlng) {
+        function addVillage(latlng, showNotify = true) {
             const point = { lat: latlng.lat, lng: latlng.lng };
             villages.push(point);
             const marker = L.marker(latlng, { icon: villageIcon }).addTo(villageLayer);
             marker.bindPopup(`หมู่บ้าน #${villages.length}<br>Lat: ${point.lat.toFixed(4)}<br>Lng: ${point.lng.toFixed(4)}`);
             updateCounts();
-            showNotification(`เพิ่มหมู่บ้าน #${villages.length} เรียบร้อย`, 'success');
+            renderVillageList(); // Sync UI
+            if (showNotify) showNotification(`เพิ่มหมู่บ้าน #${villages.length} เรียบร้อย`, 'success');
         }
 
         function onMapClick(e) {
@@ -908,17 +1120,18 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const text = e.target.result;
                 const points = parseCSV(text);
                 if (!points) return;
-                
+
                 // Clear existing villages first
                 villages = [];
                 villageLayer.clearLayers();
-                
-                points.forEach(p => addVillage(L.latLng(p.lat, p.lng)));
+
+                points.forEach(p => addVillage(L.latLng(p.lat, p.lng), false));
                 showNotification(`อัปโหลดไฟล์ CSV สำเร็จ - เพิ่ม ${points.length} หมู่บ้าน`, 'success');
+                renderVillageList();
             };
             reader.readAsText(file);
             event.target.value = ''; // Reset file input
@@ -949,11 +1162,12 @@
                 return null;
             }
         }
-        
+
         function clearVillages() {
             villages = [];
             villageLayer.clearLayers();
             updateCounts();
+            renderVillageList();
             showNotification('ล้างหมู่บ้านทั้งหมดแล้ว', 'info');
         }
 
@@ -964,12 +1178,13 @@
             resultLayer.clearLayers();
             voronoiLayer.clearLayers();
             updateCounts();
+            renderVillageList();
             resultsPanel.classList.add('hidden');
             showNotification('ล้างข้อมูลทั้งหมดแล้ว', 'info');
         }
 
         // --- Core Calculation Logic ---
-        
+
         /**
          * Calculates distance between two lat/lon points using Haversine formula.
          * @returns {number} Distance in kilometers.
@@ -979,8 +1194,8 @@
             const dLat = (p2.lat - p1.lat) * Math.PI / 180;
             const dLon = (p2.lng - p1.lng) * Math.PI / 180;
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
@@ -1034,7 +1249,7 @@
             // INITIALIZATION: k-means++ style
             // ============================================
             let sensors = [];
-            
+
             // Pick first sensor randomly from villages
             const firstIndex = Math.floor(Math.random() * villages.length);
             sensors.push({
@@ -1056,7 +1271,7 @@
                             minDistToSensors = dist;
                         }
                     }
-                    
+
                     // If this village is farther from all sensors than previous best, choose it
                     if (minDistToSensors > maxMinDistance) {
                         maxMinDistance = minDistToSensors;
@@ -1127,7 +1342,7 @@
                         // This is the least-squares center that minimizes sum of squared distances
                         let sumLat = 0;
                         let sumLng = 0;
-                        
+
                         for (const villageIndex of clusters[s]) {
                             sumLat += villages[villageIndex].lat;
                             sumLng += villages[villageIndex].lng;
@@ -1244,7 +1459,7 @@
         function calculateCombinations(n, k) {
             if (k > n) return 0;
             if (k === 0 || k === n) return 1;
-            
+
             let result = 1;
             for (let i = 0; i < k; i++) {
                 result = result * (n - i) / (i + 1);
@@ -1295,18 +1510,18 @@
             } else {
                 maxCombinations = Math.min(totalCombinations, 50000); // 50k for 6+ sensors
             }
-            
+
             console.log(`Max combinations for ${numSensors} sensors: ${maxCombinations.toLocaleString()}`);
-            
+
             // Use different strategies based on the problem size
             let useSmartSampling = false;
             if (totalCombinations > maxCombinations * 2) {
                 useSmartSampling = true;
                 console.log("Using smart sampling strategy for large problem");
             }
-            
-            const combinationsIterator = useSmartSampling ? 
-                getSmartSampledCombinations(candidates, numSensors, maxCombinations) : 
+
+            const combinationsIterator = useSmartSampling ?
+                getSmartSampledCombinations(candidates, numSensors, maxCombinations) :
                 getCombinations(candidates, numSensors);
 
             for (const combo of combinationsIterator) {
@@ -1362,7 +1577,7 @@
                     const percent = Math.min(progress, 90);
                     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
                     const rate = (processedCombinations / ((Date.now() - startTime) / 1000)).toFixed(0);
-                    
+
                     updateProgress(
                         percent,
                         `กำลังคำนวณ... ${percent.toFixed(1)}%`,
@@ -1380,7 +1595,7 @@
                 usedSmartSampling: useSmartSampling
             };
         }
-        
+
         /**
          * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
          * Smart sampling strategy for large problems - selects representative combinations
@@ -1388,13 +1603,13 @@
         function* getSmartSampledCombinations(candidates, numSensors, maxSamples) {
             const totalCandidates = candidates.length;
             let sampledCount = 0;
-            
+
             // Strategy 1: Regular grid sampling
             const step = Math.max(1, Math.floor(totalCandidates / Math.max(1, maxSamples / numSensors / 2)));
             for (let i = 0; i < totalCandidates && sampledCount < maxSamples * 0.6; i += step) {
                 const endIndex = Math.min(i + step * numSensors, totalCandidates);
                 const subset = candidates.slice(i, endIndex);
-                
+
                 if (subset.length >= numSensors) {
                     for (const combo of getCombinations(subset, numSensors)) {
                         if (sampledCount >= maxSamples * 0.6) break;
@@ -1403,38 +1618,38 @@
                     }
                 }
             }
-            
+
             // Strategy 2: Random sampling for remaining quota
             const remainingSamples = maxSamples - sampledCount;
             let attempts = 0;
             const maxAttempts = remainingSamples * 10; // Prevent infinite loops
-            
+
             for (let i = 0; i < remainingSamples && sampledCount < maxSamples && attempts < maxAttempts; i++) {
                 const randomCombo = [];
                 const usedIndices = new Set();
                 let validCombo = true;
-                
+
                 for (let j = 0; j < numSensors; j++) {
                     let randomIndex;
                     let attemptsForIndex = 0;
-                    
+
                     do {
                         randomIndex = Math.floor(Math.random() * totalCandidates);
                         attemptsForIndex++;
                         attempts++;
-                        
+
                         if (attemptsForIndex > 100) {
                             validCombo = false;
                             break;
                         }
                     } while (usedIndices.has(randomIndex));
-                    
+
                     if (!validCombo) break;
-                    
+
                     usedIndices.add(randomIndex);
                     randomCombo.push(candidates[randomIndex]);
                 }
-                
+
                 if (validCombo && randomCombo.length === numSensors) {
                     yield randomCombo;
                     sampledCount++;
@@ -1456,7 +1671,7 @@
                 if (p.lng < minLng) minLng = p.lng;
                 if (p.lng > maxLng) maxLng = p.lng;
             });
-            
+
             // Handle case with single point
             if (points.length === 1) {
                 minLat -= 0.1; maxLat += 0.1;
@@ -1523,7 +1738,7 @@
                     // NEW ALGORITHM: k-means / Centroidal Voronoi with Least-Squares
                     // ============================================
                     updateProgress(10, 'กำลังเริ่มต้นอัลกอริธึม k-means...', '');
-                    
+
                     // Call the new optimization function
                     const result = optimizeSensorsWithVoronoiLeastSquares(villages, numSensors, {
                         maxIterations: 30,
@@ -1531,17 +1746,17 @@
                     });
 
                     updateProgress(100, 'การคำนวณเสร็จสิ้น!', '');
-                    
+
                     // Store results in global variables
                     currentResults = result.sensors;
                     // Note: result.assignments and result.clusters are also available if needed
-                    
+
                     // Calculate computation time
                     const calculationTime = ((Date.now() - calculationStartTime) / 1000).toFixed(2);
-                    
+
                     // Display results
                     displayResultsWithMetrics(result.sensors, result.metrics, calculationTime);
-                    
+
                     toggleLoading(false);
                     showNotification(`คำนวณเสร็จสิ้น! - ระยะทางสูงสุด: ${result.metrics.maxDistanceKm.toFixed(2)} กม.`, 'success');
 
@@ -1556,20 +1771,20 @@
 
         // --- Result Display ---
         function clearResults() {
-             resultLayer.clearLayers();
-             voronoiLayer.clearLayers();
-             optimalLocationsEl.innerHTML = '';
+            resultLayer.clearLayers();
+            voronoiLayer.clearLayers();
+            optimalLocationsEl.innerHTML = '';
         }
 
         function displayResults(optimalSensors, score) {
             clearResults();
-            
+
             let locationsHTML = '<div class="space-y-2">';
             optimalSensors.forEach((sensor, index) => {
                 L.marker([sensor.lat, sensor.lng], { icon: optimalIcon })
-                 .addTo(resultLayer)
-                 .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}<br>ระยะทางไกลที่สุด: ${score.toFixed(2)} กม.`);
-                
+                    .addTo(resultLayer)
+                    .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}<br>ระยะทางไกลที่สุด: ${score.toFixed(2)} กม.`);
+
                 locationsHTML += `
                     <div class="flex items-center justify-between p-2 bg-white rounded border">
                         <div>
@@ -1586,7 +1801,7 @@
             optimalLocationsEl.innerHTML = locationsHTML;
 
             drawVoronoi(optimalSensors);
-            
+
             resultText.textContent = `ระยะทางไกลที่สุดที่รับประกันได้: ${score.toFixed(2)} กม.`;
             resultsPanel.classList.remove('hidden');
             updateCounts();
@@ -1600,14 +1815,14 @@
          */
         function displayResultsWithMetrics(sensors, metrics, calculationTime) {
             clearResults();
-            
+
             // Add sensor markers to map
             let locationsHTML = '<div class="space-y-2">';
             sensors.forEach((sensor, index) => {
                 L.marker([sensor.lat, sensor.lng], { icon: optimalIcon })
-                 .addTo(resultLayer)
-                 .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}`);
-                
+                    .addTo(resultLayer)
+                    .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}`);
+
                 locationsHTML += `
                     <div class="flex items-center justify-between p-2 bg-white rounded border">
                         <div>
@@ -1627,15 +1842,15 @@
             // Note: Voronoi is used ONLY for visualization here. The actual optimization
             // uses the k-means-like / least-squares centroid algorithm.
             drawVoronoiForSensors(sensors);
-            
+
             // Update result text with max distance
             resultText.textContent = `ระยะทางสูงสุด: ${metrics.maxDistanceKm.toFixed(2)} กม.`;
-            
+
             // Update statistics panel
             calculationTimeEl.textContent = calculationTime + ' วินาที';
             maxDistanceKmEl.textContent = metrics.maxDistanceKm.toFixed(2);
             averageDistanceKmEl.textContent = metrics.averageDistanceKm.toFixed(2);
-            
+
             resultsPanel.classList.remove('hidden');
             updateCounts();
         }
@@ -1656,7 +1871,7 @@
             });
             const latPadding = (maxLat - minLat) * 0.2 || 0.1;
             const lngPadding = (maxLng - minLng) * 0.2 || 0.1;
-            
+
             const mapBounds = L.latLngBounds([
                 [minLat - latPadding, minLng - lngPadding],
                 [maxLat + latPadding, maxLng + lngPadding]
@@ -1666,20 +1881,20 @@
             const bottomRight = map.project(mapBounds.getSouthEast());
 
             const voronoiBounds = [topLeft.x, topLeft.y, bottomRight.x, bottomRight.y];
-            
+
             const projectedPoints = points.map(p => {
                 const projected = map.project(L.latLng(p.lat, p.lng));
                 return [projected.x, projected.y];
             });
-            
+
             const delaunay = d3.Delaunay.from(projectedPoints);
             const voronoi = delaunay.voronoi(voronoiBounds);
-            
+
             const colors = d3.scaleOrdinal(d3.schemeCategory10);
-            
+
             for (let i = 0; i < points.length; i++) {
                 const cell = voronoi.cellPolygon(i);
-                if(cell) {
+                if (cell) {
                     const latlngs = cell.map(p => map.unproject(L.point(p[0], p[1])));
                     L.polygon(latlngs, {
                         color: colors(i),
@@ -1707,7 +1922,7 @@
         function drawVoronoiForSensors(sensors) {
             // Clear any existing Voronoi layers
             voronoiLayer.clearLayers();
-            
+
             if (!sensors || sensors.length === 0) {
                 console.warn('No sensors provided for Voronoi visualization');
                 return;
@@ -1717,43 +1932,43 @@
             // Use both villages and sensors to ensure full coverage
             const allPoints = [...villages, ...sensors];
             let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-            
+
             allPoints.forEach(p => {
                 if (p.lat < minLat) minLat = p.lat;
                 if (p.lat > maxLat) maxLat = p.lat;
                 if (p.lng < minLng) minLng = p.lng;
                 if (p.lng > maxLng) maxLng = p.lng;
             });
-            
+
             // Add padding to ensure Voronoi cells extend beyond the data points
             const latPadding = (maxLat - minLat) * 0.2 || 0.1;
             const lngPadding = (maxLng - minLng) * 0.2 || 0.1;
-            
+
             minLat -= latPadding;
             maxLat += latPadding;
             minLng -= lngPadding;
             maxLng += lngPadding;
-            
+
             // Create Delaunay triangulation from sensor positions
             // d3.Delaunay.from expects: from(data, xAccessor, yAccessor)
             // For geographic coordinates: x = longitude, y = latitude
             const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
-            
+
             // Create Voronoi diagram with bounds [x0, y0, x1, y1] = [minLng, minLat, maxLng, maxLat]
             const voronoi = delaunay.voronoi([minLng, minLat, maxLng, maxLat]);
-            
+
             // Color scheme for Voronoi cells
             const colors = d3.scaleOrdinal(d3.schemeCategory10);
-            
+
             // Draw Voronoi cell for each sensor
             for (let i = 0; i < sensors.length; i++) {
                 const cell = voronoi.cellPolygon(i);
-                
+
                 if (cell && cell.length > 0) {
                     // Convert Voronoi polygon coordinates to Leaflet LatLng format
                     // Voronoi returns [x, y] = [lng, lat] pairs, Leaflet needs [lat, lng]
                     const latlngs = cell.map(point => [point[1], point[0]]); // [lat, lng] for Leaflet
-                    
+
                     // Create and add polygon to Voronoi layer
                     L.polygon(latlngs, {
                         color: colors(i),
@@ -1783,7 +1998,7 @@
 
             const csvContent = [
                 'ลำดับ,Latitude,Longitude',
-                ...currentResults.map((sensor, index) => 
+                ...currentResults.map((sensor, index) =>
                     `${index + 1},${sensor.lat.toFixed(6)},${sensor.lng.toFixed(6)}`
                 )
             ].join('\n');
@@ -1797,7 +2012,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             showNotification('ส่งออกผลลัพธ์เรียบร้อย', 'success');
         }
 
@@ -1846,17 +2061,17 @@
                 }
             }
         }
-        
+
         // Enhanced mobile layout management
         function updateMobileLayout() {
             if (window.innerWidth <= 768) {
                 const panel = document.querySelector('.info-panel');
                 const mapContainer = document.getElementById('map-container');
-                
+
                 if (panel && !panel.classList.contains('expanded') && !panel.classList.contains('collapsed')) {
                     panel.classList.add('collapsed');
                 }
-                
+
                 // Ensure map resizes properly on mobile
                 if (map && mapContainer) {
                     setTimeout(() => {
@@ -1865,7 +2080,7 @@
                 }
             }
         }
-        
+
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
             // Ensure all elements exist before adding event listeners
@@ -1900,7 +2115,7 @@
             if (closeHelpBtn) closeHelpBtn.addEventListener('click', hideHelp);
             if (cancelBtn) cancelBtn.addEventListener('click', cancelCalculation);
         });
-        
+
         // Close modal when clicking outside
         if (helpModal) {
             helpModal.addEventListener('click', (e) => {
@@ -1909,11 +2124,11 @@
                 }
             });
         }
-        
+
         // Initialize map and other components
         initializeMap();
         updateCounts();
-        
+
         // Show welcome message
         setTimeout(() => {
             showNotification('ยินดีต้อนรับสู่เครื่องมือหาตำแหน่งติดตั้งเสาวัดระดับน้ำอัจฉริยะ!', 'info');
@@ -1921,11 +2136,11 @@
 
         // Initialize mobile layout
         updateMobileLayout();
-        
+
         // Handle window resize events
         window.addEventListener('resize', () => {
             updateMobileLayout();
-            
+
             // Invalidate map size after layout changes
             if (map) {
                 setTimeout(() => {
@@ -1933,7 +2148,7 @@
                 }, 100);
             }
         });
-        
+
         // Handle orientation changes on mobile
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
@@ -1945,4 +2160,5 @@
         });
     </script>
 </body>
+
 </html>
