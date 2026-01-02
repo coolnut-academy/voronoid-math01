@@ -1,2384 +1,536 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#3b82f6">
-    <title>WebApp สำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ - Hongsonsuksa School</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ - โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</title>
+    
     <link rel="icon" type="image/png" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
-    <link rel="apple-touch-icon" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+    
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+
     <style>
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            /* CSS fallbacks for older browsers */
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-            /* ไม่ใช้ overflow: hidden เพื่อให้ scroll ได้บนมือถือ */
+        body { margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; overflow: hidden; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        .village-marker {
+            width: 14px;
+            height: 14px;
+            background-color: #2563EB;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
         }
 
-        #map {
-            height: 100%;
-            width: 100%;
-            cursor: crosshair;
-        }
-
-        .leaflet-container {
-            background: #f0f9ff;
-        }
-
-        .info-panel {
-            max-height: calc(100vh - 64px);
-            overflow-y: auto !important;
-            /* เพิ่ม overscroll-behavior เพื่อป้องกัน scroll กระโดดบนมือถือ */
-            overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
-            /* ให้แน่ใจว่า scroll ทำงานได้ทุกสถานการณ์ */
-            scroll-behavior: smooth;
-        }
-
-        /* Custom scrollbar */
-        .info-panel::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .info-panel::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .info-panel::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
-        }
-
-        .info-panel::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        .legend-item {
+        .sensor-marker {
             display: flex;
             align-items: center;
-            margin-bottom: 0.5rem;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            color: #DC2626; /* สีแดง */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            font-size: 24px;
+            animation: popIn 0.3s ease-out;
+            cursor: move; /* เปลี่ยนเคอร์เซอร์เป็นรูปมือจับ */
+            transition: transform 0.1s;
+        }
+        
+        /* Effect ตอนกำลังลาก */
+        .sensor-marker:active {
+            transform: scale(1.2);
+            cursor: grabbing;
         }
 
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-right: 10px;
-            border: 1px solid #777;
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
 
-        /* Enhanced UI Components with fallbacks */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            /* Fallback for browsers without backdrop-filter support */
-            background: #ffffff;
-            background: rgba(255, 255, 255, 0.95);
-            /* Modern backdrop-filter with fallback */
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .card-hover {
-            /* Fallback transition for older browsers */
-            -webkit-transition: all 0.3s ease;
-            -moz-transition: all 0.3s ease;
-            -o-transition: all 0.3s ease;
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            /* Fallback transforms for older browsers */
-            -webkit-transform: translateY(-2px);
-            -moz-transform: translateY(-2px);
-            -ms-transform: translateY(-2px);
-            transform: translateY(-2px);
-            /* Fallback box-shadow */
-            -webkit-box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            -moz-box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background-color: #e5e7eb;
-            border-radius: 3px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-            border-radius: 3px;
-            transition: width 0.3s ease;
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%);
-            }
-
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border: 1px solid #e2e8f0;
-        }
-
-        .floating-action {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .floating-action:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            padding: 16px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        .notification.error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-
-        .notification.info {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-        }
-
-        /* Enhanced Mobile Responsive Design */
         @media (max-width: 768px) {
-
-            /* Use more compatible viewport units */
-            body,
-            html {
-                height: 100vh;
-                min-height: 100vh;
-                max-height: 100vh;
-                overflow: hidden;
-                position: fixed;
-                width: 100%;
-            }
-
-            /* Main layout for mobile */
-            .flex-col {
-                flex-direction: column !important;
-                height: 100vh !important;
-                min-height: 100vh !important;
-                max-height: 100vh !important;
-                overflow: hidden;
-            }
-
-            /* Fixed header height compensation */
-            #mainLayout {
-                padding-top: 0 !important;
-                height: calc(100vh - 64px) !important;
-                min-height: calc(100vh - 64px) !important;
-                max-height: calc(100vh - 64px) !important;
-                margin-top: 64px;
-            }
-
-            /* Mobile panel styling with better fallbacks */
-            .info-panel {
-                position: fixed !important;
-                width: 100% !important;
-                height: 60vh !important;
-                min-height: 300px !important;
-                max-height: 60vh !important;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                z-index: 30;
-                border-radius: 1rem 1rem 0 0;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-                background: #ffffff;
-                transform: translateY(calc(100% - 60px));
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                overflow-y: auto !important;
-                overflow-x: hidden;
-                -webkit-overflow-scrolling: touch;
-                overscroll-behavior: contain;
-                touch-action: pan-y;
-            }
-
-            .info-panel.expanded {
-                transform: translateY(0);
-            }
-
-            .info-panel.collapsed {
-                transform: translateY(calc(100% - 60px));
-            }
-
-            /* Map container for mobile */
-            #map-container {
-                width: 100% !important;
-                position: fixed !important;
-                top: 64px !important;
-                left: 0 !important;
-                right: 0 !important;
-                height: calc(100vh - 64px) !important;
-                min-height: calc(100vh - 64px) !important;
-                max-height: calc(100vh - 64px) !important;
-                z-index: 1;
-            }
-
-            #map {
-                width: 100% !important;
-                height: 100% !important;
+            .sidebar {
                 position: absolute;
-                top: 0;
+                bottom: 0;
                 left: 0;
                 right: 0;
-                bottom: 0;
-            }
-
-            /* Mobile-specific UI improvements */
-            .floating-action {
-                bottom: 80px;
-                right: 16px;
-                width: 48px;
-                height: 48px;
-                font-size: 18px;
-            }
-
-            .notification {
-                right: 12px;
-                left: 12px;
-                top: 80px;
-                transform: translateY(-120px);
-                font-size: 14px;
-                padding: 12px 16px;
-            }
-
-            .notification.show {
-                transform: translateY(0);
-            }
-
-            /* Touch-friendly interactive elements */
-            button {
-                min-height: 44px;
-                min-width: 44px;
-                touch-action: manipulation;
-            }
-
-            input,
-            select {
-                min-height: 44px;
-                font-size: 16px;
-                /* Prevent zoom on iOS */
-            }
-
-            /* Better spacing for mobile */
-            .space-y-3>*+* {
-                margin-top: 0.75rem;
-            }
-
-            .space-y-4>*+* {
-                margin-top: 1rem;
-            }
-
-            /* Improved card layout */
-            .stat-card {
-                padding: 12px;
-                min-height: auto;
-            }
-
-            /* Header adjustments for mobile */
-            .fixed {
-                position: fixed !important;
-            }
-
-            /* Panel handle visibility */
-            .info-panel .md\\:hidden {
-                display: flex !important;
-            }
-        }
-
-        /* Tablet and larger screens */
-        @media (min-width: 769px) {
-
-            /* Reset mobile-specific styles */
-            body,
-            html {
-                height: auto;
-                min-height: 100vh;
-                max-height: none;
-                overflow: auto;
-                position: static;
-                width: auto;
-            }
-
-            .flex-row {
-                flex-direction: row !important;
-                height: 100vh !important;
-                min-height: 100vh !important;
-                overflow: hidden;
-            }
-
-            #mainLayout {
-                padding-top: 0 !important;
-                height: calc(100vh - 64px) !important;
-                margin-top: 64px;
-                overflow: hidden;
-            }
-
-            .info-panel {
-                position: static !important;
-                width: 24rem !important;
-                height: calc(100vh - 64px) !important;
-                min-height: calc(100vh - 64px) !important;
-                max-height: calc(100vh - 64px) !important;
-                border-radius: 0;
-                box-shadow: 2px 0 16px rgba(0, 0, 0, 0.08);
-                background: #fff;
-                overflow-y: auto !important;
-                overflow-x: hidden;
-                scroll-behavior: smooth;
-                transform: none !important;
-                bottom: auto;
-                left: auto;
-                right: auto;
-                z-index: auto;
-            }
-
-            #map-container {
-                height: calc(100vh - 64px) !important;
-                min-height: calc(100vh - 64px) !important;
-                width: auto !important;
-                position: static !important;
-                top: auto !important;
-                left: auto !important;
-                right: auto !important;
-                z-index: auto;
-            }
-
-            #map {
-                height: 100% !important;
+                height: 50vh;
                 width: 100% !important;
-                position: static;
+                border-radius: 20px 20px 0 0;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 50;
             }
-
-            /* Reset mobile-specific UI elements */
-            .floating-action {
-                bottom: 20px;
-                right: 20px;
-                width: 60px;
-                height: 60px;
-                font-size: 20px;
-            }
-
-            .notification {
-                right: 20px;
-                left: auto;
-                top: 20px;
-                transform: translateX(400px);
-                font-size: 16px;
-                padding: 16px 20px;
-            }
-
-            .notification.show {
-                transform: translateX(0);
-            }
-        }
-
-        /* Large screens optimization */
-        @media (min-width: 1200px) {
-            .info-panel {
-                width: 28rem !important;
-            }
-        }
-
-        /* Small tablets in landscape */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .info-panel {
-                width: 20rem !important;
-            }
+            .sidebar.active { transform: translateY(0); }
         }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Kanit:wght@400;500;700&display=swap"
-        rel="stylesheet">
 </head>
 
 <body class="bg-gray-100">
 
-    <!-- Enhanced Header with Navigation -->
-    <div class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-gray-200">
-        <div class="flex items-center justify-between px-4 py-3">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white shadow-sm">
-                    <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png" alt="Hong Son Logo"
-                        class="w-full h-full object-contain"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div
-                        class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg hidden items-center justify-center">
-                        <i class="fas fa-water text-white text-lg"></i>
-                    </div>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold text-gray-800">เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ</h1>
-                    <p class="text-xs text-gray-500">เครื่องมือหาตำแหน่งติดตั้งที่เหมาะสม</p>
-                </div>
+    <div class="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm h-16 flex items-center justify-between px-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow overflow-hidden border border-gray-100">
+                <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png" 
+                     alt="School Logo" 
+                     class="w-full h-full object-contain p-0.5">
             </div>
-            <div class="flex items-center space-x-2">
-                <button id="helpBtn"
-                    class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="ช่วยเหลือ">
-                    <i class="fas fa-question-circle"></i>
-                </button>
-                <button id="settingsBtn"
-                    class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="ตั้งค่า">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button id="mobileMenuBtn"
-                    class="md:hidden p-2 text-gray-700 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notification Container -->
-    <div id="notificationContainer"></div>
-
-    <div id="mainLayout" class="flex flex-col md:flex-row h-screen pt-16">
-        <!-- Control Panel -->
-        <div id="controlPanel" class="w-full md:w-96 bg-white shadow-xl p-4 info-panel flex-shrink-0
-            md:overflow-y-auto
-            fixed md:static top-16 left-0 z-40 h-full md:h-auto
-            transition-transform duration-300 ease-in-out
-            transform translate-x-[-100%] md:translate-x-0
-            md:rounded-none
-            md:w-96 w-full
-            " style="height: calc(100vh - 64px);">
-
-            <!-- Mobile Panel Close Button -->
-            <div class="md:hidden flex justify-end mb-2">
-                <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-gray-600 p-2">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="stat-card p-3 rounded-lg card-hover">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-gray-500">หมู่บ้าน</p>
-                            <p class="text-lg font-bold text-blue-600" id="villageCount">0</p>
-                        </div>
-                        <i class="fas fa-home text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="stat-card p-3 rounded-lg card-hover">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-gray-500">Sensor Gateways</p>
-                            <p class="text-lg font-bold text-green-600" id="sensorCount">0</p>
-                        </div>
-                        <i class="fas fa-satellite-dish text-green-500"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 1: Add Villages -->
-            <!-- Step 1: Add Villages (Tabbed Interface) -->
-            <div
-                class="my-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 card-hover">
-                <div class="flex items-center mb-3">
-                    <div
-                        class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                        1</div>
-                    <h2 class="font-bold text-lg text-gray-700">เพิ่มหมู่บ้าน (Add Villages)</h2>
-                </div>
-
-                <!-- Tabs -->
-                <div class="flex space-x-2 mb-4">
-                    <button id="tabManual" onclick="switchTab('manual')"
-                        class="flex-1 py-2 px-3 text-sm font-medium rounded-lg bg-blue-600 text-white shadow-sm transition-all focus:outline-none">
-                        <i class="fas fa-keyboard mr-1"></i> กรอกเอง
-                    </button>
-                    <button id="tabCSV" onclick="switchTab('csv')"
-                        class="flex-1 py-2 px-3 text-sm font-medium rounded-lg bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all focus:outline-none">
-                        <i class="fas fa-file-csv mr-1"></i> ไฟล์ CSV
-                    </button>
-                </div>
-
-                <!-- Tab Content: Manual Input -->
-                <div id="panelManual" class="block">
-                    <p class="text-sm text-gray-600 mb-3">เพิ่มพิกัดหมู่บ้านด้วยตัวเอง (Latitude, Longitude)
-                        หรือคลิกบนแผนที่</p>
-
-                    <div class="max-h-48 overflow-y-auto mb-3 pr-1 space-y-2" id="villageList">
-                        <!-- Dynamic Input Rows will go here -->
-                        <div class="text-center text-gray-400 text-sm py-4">ยังไม่มีข้อมูลหมู่บ้าน</div>
-                    </div>
-
-                    <button onclick="addNewVillageInput()"
-                        class="w-full bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg text-sm transition-colors border-dashed">
-                        <i class="fas fa-plus mr-1"></i> เพิ่มแถวรายการ
-                    </button>
-                </div>
-
-                <!-- Tab Content: CSV Input -->
-                <div id="panelCSV" class="hidden">
-                    <p class="text-sm text-gray-600 mb-4">อัปโหลดไฟล์ (.csv) ที่มีคอลัมน์ latitude, longitude</p>
-
-                    <!-- CSV Format Instructions -->
-                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 class="text-sm font-semibold text-blue-800 mb-2 flex items-center">
-                            <i class="fas fa-info-circle mr-1"></i>ตัวอย่างรูปแบบไฟล์:
-                        </h4>
-                        <div class="text-xs text-blue-700 space-y-1 mb-2">
-                            <p>ต้องมี Header: <code class="bg-blue-100 px-1 rounded">latitude</code>, <code
-                                    class="bg-blue-100 px-1 rounded">longitude</code></p>
-                        </div>
-                        <button onclick="downloadCSVTemplate()"
-                            class="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded transition-colors">
-                            <i class="fas fa-download mr-1"></i> ดาวโหลดตัวอย่างไฟล์
-                        </button>
-                    </div>
-
-                    <div class="space-y-3">
-                        <input type="file" id="csvVillages" accept=".csv" class="hidden"
-                            onchange="handleFileUpload(event)">
-                        <button onclick="document.getElementById('csvVillages').click()"
-                            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md">
-                            <i class="fas fa-upload mr-2"></i>อัปโหลด CSV หมู่บ้าน
-                        </button>
-                    </div>
-                </div>
-
-                <button id="clearVillagesBtn"
-                    class="mt-4 w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors">
-                    <i class="fas fa-trash mr-2"></i>ล้างหมู่บ้านทั้งหมด
-                </button>
-            </div>
-
-            <!-- Step 2: Configuration & Run -->
-            <div
-                class="my-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 card-hover">
-                <div class="flex items-center mb-3">
-                    <div
-                        class="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                        2</div>
-                    <h2 class="font-bold text-lg text-gray-700">ตั้งค่าและคำนวณ</h2>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <label for="numSensors" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-network-wired text-purple-500 mr-1"></i>จำนวน Sensor Gateway (Hub):
-                        </label>
-                        <input type="number" id="numSensors" value="3" min="1" max="10"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors">
-                        <p class="text-xs text-gray-500 mt-1 flex items-center">
-                            <i class="fas fa-info-circle mr-1"></i>ระบบจะหาจุดศูนย์กลาง (Centroid) เพื่อวาง Gateway
-                            เชื่อมต่ออุปกรณ์
-                        </p>
-                    </div>
-                </div>
-                <div class="mt-6 space-y-3">
-                    <button id="runBtn"
-                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
-                        <span id="runBtnText">
-                            <i class="fas fa-calculator mr-2"></i>คำนวณตำแหน่ง Gateway
-                        </span>
-                        <div id="loadingSpinner"
-                            class="hidden w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mx-auto">
-                        </div>
-                    </button>
-                    <button id="cancelBtn"
-                        class="hidden w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                        <i class="fas fa-stop mr-2"></i>ยกเลิกการคำนวณ
-                    </button>
-                    <div class="progress-bar hidden" id="progressBar">
-                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                    </div>
-                    <div id="progressInfo" class="hidden text-center text-sm text-gray-600 mt-2">
-                        <div id="progressText">กำลังคำนวณ...</div>
-                        <div id="progressDetails" class="text-xs text-gray-500 mt-1"></div>
-                    </div>
-                    <button id="resetBtn"
-                        class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                        <i class="fas fa-trash-alt mr-2"></i>ล้างข้อมูลทั้งหมด
-                    </button>
-                </div>
-            </div>
-
-            <!-- Results -->
-            <div id="resultsPanel"
-                class="my-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 card-hover hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center">
-                        <div
-                            class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                            ✓</div>
-                        <h2 class="font-bold text-lg text-gray-700">ผลการคำนวณ</h2>
-                    </div>
-                    <button id="exportBtn"
-                        class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
-                        title="ส่งออกผลลัพธ์">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
-                <p class="text-sm text-gray-600 mb-3 flex items-center">
-                    <i class="fas fa-target text-green-500 mr-1"></i>ผลลัพธ์: ตำแหน่ง Gateway ที่เหมาะสมที่สุด
+            <div>
+                <h1 class="text-sm md:text-base font-bold text-blue-900 leading-tight">
+                    เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ
+                </h1>
+                <p class="text-[10px] md:text-xs text-gray-600">
+                    โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ (โครงงาน YSC 28YMAN00218T)
                 </p>
-                <div class="bg-white p-3 rounded-lg border border-green-200 mb-3">
-                    <p class="text-lg font-bold text-green-600" id="resultText"></p>
-                </div>
-
-                <!-- Convergence Graph -->
-                <div id="energyChartContainer" class="hidden mb-4 p-2 bg-white rounded border border-blue-100">
-                    <canvas id="energyChart" height="200"></canvas>
-                </div>
-
-                <div id="optimalLocations" class="text-sm text-gray-700"></div>
-
-                <!-- Performance Stats -->
-                <div class="mt-4 p-3 bg-white rounded-lg border border-green-200">
-                    <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="fas fa-chart-line text-green-500 mr-1"></i>สถิติการคำนวณ
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div>เวลาที่ใช้: <span id="calculationTime" class="font-medium">-</span></div>
-                        <div>ระยะทางสูงสุด: <span id="maxDistanceKm" class="font-medium">-</span> กม.</div>
-                        <div>ระยะทางเฉลี่ย: <span id="averageDistanceKm" class="font-medium">-</span> กม.</div>
-                        <div>อัลกอริธึม: <span class="font-medium text-green-600">k-means / Voronoi</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Legend -->
-            <div
-                class="my-4 p-4 bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl border border-gray-200 card-hover">
-                <h2 class="font-bold text-lg text-gray-700 mb-3 flex items-center">
-                    <i class="fas fa-map-marked-alt text-gray-500 mr-2"></i>คำอธิบายสัญลักษณ์
-                </h2>
-                <div class="space-y-2">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #3b82f6;"></div>
-                        <span class="text-sm">หมู่บ้าน</span>
-                    </div>
-                    <div class="legend-item">
-                        <div style="width: 20px; height: 20px; margin-right: 10px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444"
-                                class="w-full h-full">
-                                <path
-                                    d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                            </svg>
-                        </div>
-                        <span class="text-sm">Sensor Gateway (Hub)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color"
-                            style="background-color: rgba(59, 130, 246, 0.15); border: 2px solid #3b82f6;"></div>
-                        <span class="text-sm">พื้นที่ครอบคลุม (Voronoi)</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Map -->
-        <div id="map-container" class="flex-grow relative md:static md:h-auto h-[calc(100vh-64px)]">
-            <div id="map" class="absolute inset-0 md:static md:h-full h-full"></div>
-
-            <!-- Map Controls -->
-            <div class="absolute top-4 left-4 z-10 space-y-2">
-                <button id="toggleVoronoiBtn"
-                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
-                    title="แสดง/ซ่อน Voronoi">
-                    <i class="fas fa-layer-group"></i>
-                </button>
-                <button id="fitBoundsBtn"
-                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
-                    title="แสดงทั้งหมด">
-                    <i class="fas fa-expand-arrows-alt"></i>
-                </button>
-                <div class="h-px bg-gray-200 my-1"></div>
-                <button id="toggleDelaunayBtn"
-                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
-                    title="แสดง/ซ่อน Delaunay Network">
-                    <i class="fas fa-project-diagram"></i>
-                </button>
-                <button id="toggleCriticalBtn"
-                    class="bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg shadow-md border border-gray-200 transition-colors"
-                    title="แสดง/ซ่อน Critical Points">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </button>
-            </div>
-
-            <!-- Map Info -->
-            <div
-                class="absolute bottom-4 left-4 z-10 bg-white bg-opacity-90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200">
-                <div class="text-xs text-gray-600">
-                    <div>คลิกเพื่อเพิ่มหมู่บ้าน</div>
-                    <div>ใช้เมาส์ลากเพื่อเลื่อนแผนที่</div>
-                </div>
             </div>
         </div>
+        
+        <button id="menuToggle" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
     </div>
 
-    <!-- Floating Action Button -->
-    <button id="floatingHelpBtn" class="floating-action" title="ช่วยเหลือ">
-        <i class="fas fa-question"></i>
-    </button>
+    <div class="flex h-screen pt-16 relative">
+        
+        <div id="sidebar" class="sidebar w-full md:w-[400px] bg-white shadow-xl flex flex-col h-full border-r z-30 md:relative hidden md:flex">
+            
+            <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="toggleSidebar()">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            </div>
 
-    <!-- Help Modal -->
-    <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">คู่มือการใช้งาน</h2>
-                    <button id="closeHelpBtn" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-xl"></i>
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <h2 class="font-bold text-blue-800 flex items-center mb-3">
+                        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                        ข้อมูลหมู่บ้าน (Villages)
+                    </h2>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button id="btnClickMode" class="bg-white border border-blue-300 text-blue-700 py-2 px-3 rounded-lg text-sm hover:bg-blue-50 transition shadow-sm active-mode">
+                            <i class="fas fa-map-marker-alt mr-1"></i> จิ้มในแผนที่
+                        </button>
+                        <label class="bg-white border border-blue-300 text-blue-700 py-2 px-3 rounded-lg text-sm hover:bg-blue-50 transition shadow-sm cursor-pointer text-center">
+                            <i class="fas fa-file-upload mr-1"></i> อัปโหลด CSV
+                            <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSV(event)">
+                        </label>
+                    </div>
+
+                    <div class="bg-white rounded-lg border border-gray-200 h-32 overflow-y-auto p-2 mb-2">
+                        <ul id="villageList" class="space-y-1 text-sm text-gray-600">
+                            <li class="text-center text-gray-400 py-4 italic">ยังไม่มีข้อมูลหมู่บ้าน</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flex justify-between items-center text-xs text-gray-500">
+                        <span id="villageCount">จำนวน: 0 แห่ง</span>
+                        <button onclick="clearAll()" class="text-red-500 hover:text-red-700 underline">ล้างข้อมูล</button>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                    <h2 class="font-bold text-purple-800 flex items-center mb-3">
+                        <span class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                        ตั้งค่าและคำนวณ (Optimization)
+                    </h2>
+
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-700 mb-1 font-semibold">จำนวน Sensor Gateway (k)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="kValue" value="3" min="1" max="10" class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-center font-bold text-lg">
+                            <span class="text-sm text-gray-500">จุด</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">*ใช้เกณฑ์ Minimax & Least Squares</p>
+                    </div>
+
+                    <button onclick="calculateOptimization()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transform transition active:scale-95 flex items-center justify-center">
+                        <i class="fas fa-calculator mr-2"></i> คำนวณตำแหน่ง
                     </button>
                 </div>
-                <div class="space-y-4 text-sm text-gray-600">
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">ขั้นตอนการใช้งาน:</h3>
-                        <ol class="list-decimal list-inside space-y-1 ml-4">
-                            <li>เลือกโหมด: <strong>กรอกเอง</strong> หรือ <strong>ไฟล์ CSV</strong></li>
-                            <li>เพิ่มตำแหน่งหมู่บ้านตามโหมดที่เลือก</li>
-                            <li>กำหนดจำนวน <strong>Sensor Gateway</strong> ที่ต้องการติดตั้ง</li>
-                            <li>คลิก "คำนวณตำแหน่ง Gateway"</li>
-                            <li>ระบบจะหาจุดศูนย์กลาง (Hub) ที่ครอบคลุมหมู่บ้านได้ดีที่สุด</li>
-                            <li>ดูตำแหน่งที่แนะนำบนแผนที่และพื้นที่ครอบคลุม (Voronoi regions)</li>
-                            <li>ตรวจสอบสถิติ: ระยะทางสูงสุดและเฉลี่ย</li>
-                            <li>ส่งออกผลลัพธ์เป็นไฟล์ CSV หากต้องการ</li>
-                        </ol>
+
+                <div id="resultPanel" class="hidden bg-green-50 p-4 rounded-xl border border-green-100 animation-fade-in">
+                    <h2 class="font-bold text-green-800 flex items-center justify-between mb-2">
+                        <span><i class="fas fa-check-circle mr-2"></i> ผลการคำนวณ</span>
+                        <span class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full animate-pulse">ปรับหมุดได้ (Draggable)</span>
+                    </h2>
+                    
+                    <div class="bg-white p-3 rounded-lg border border-green-200 shadow-sm mb-3 text-center">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">ระยะทางสูงสุด (Max Distance)</p>
+                        <p class="text-3xl font-bold text-green-600" id="maxDistanceDisplay">0.00 <span class="text-sm text-gray-500">กม.</span></p>
+                        <p class="text-[10px] text-gray-400">(ยิ่งน้อยยิ่งดี / ปรับเปลี่ยนเมื่อลากหมุด)</p>
                     </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">Sensor Gateway คืออะไร?</h3>
-                        <p class="text-sm text-gray-600 mb-2">
-                            คือสถานีแม่ข่าย (Hub) ที่ทำหน้าที่รวบรวมสัญญาณจาก Sensor รอบข้าง โดยจะติดตั้ง ณ จุดกึ่งกลาง
-                            (Centroid) ของกลุ่มหมู่บ้านที่เป็น Family เดียวกัน
-                        </p>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                         <div class="bg-white p-2 rounded border text-center">
+                            <span class="block text-gray-500">ระยะทางเฉลี่ย</span>
+                            <span class="font-bold text-gray-800" id="avgDistanceDisplay">-</span>
+                        </div>
+                        <div class="bg-white p-2 rounded border text-center">
+                            <span class="block text-gray-500">เวลาประมวลผล</span>
+                            <span class="font-bold text-gray-800" id="calcTimeDisplay">-</span>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">เกี่ยวกับอัลกอริธึม:</h3>
-                        <p class="text-sm text-gray-600 mb-2">
-                            เครื่องมือนี้ใช้อัลกอริธึม <strong>k-means / Centroidal Voronoi Tessellation</strong>
-                            เพื่อหาตำแหน่งติดตั้ง Gateway (Hub) ที่จุดศูนย์ถ่วงของกลุ่มหมู่บ้าน:
-                        </p>
-                        <ul class="list-disc list-inside space-y-1 ml-4 text-sm text-gray-600">
-                            <li>จัดกลุ่มหมู่บ้าน (Clustering) ให้กับ Gateway ที่ใกล้ที่สุด</li>
-                            <li>ย้าย Gateway ไปยัง "จุดกึ่งกลางทางภูมิศาสตร์" ของกลุ่มนั้นๆ</li>
-                            <li>ทำซ้ำจนกว่าตำแหน่งจะสมดุล</li>
-                        </ul>
-                        <p class="text-xs text-gray-500 mt-2">
-                            อัลกอริธึมนี้ให้ผลลัพธ์ที่ดีในภาพรวม แทนที่จะเน้นลดระยะทางไกลที่สุดเท่านั้น
-                        </p>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">คำแนะนำการใช้งาน:</h3>
-                        <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li>จำนวน Gateway ควรน้อยกว่าจำนวนหมู่บ้าน</li>
-                            <li>หากต้องการเพิ่มหมู่บ้านทีละเยอะๆ แนะนำให้ใช้โหมด CSV</li>
-                            <li>กด "ดาวน์โหลดตัวอย่างไฟล์" ในแท็บ CSV เพื่อดูรูปแบบที่ถูกต้อง</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">ฟีเจอร์:</h3>
-                        <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li><strong>อัลกอริธึม k-means:</strong> หาตำแหน่งที่เหมาะสมด้วยวิธี centroidal Voronoi</li>
-                            <li><strong>การลู่เข้าแบบอัตโนมัติ:</strong> หยุดเมื่อเซ็นเซอร์ไม่เคลื่อนที่มาก</li>
-                            <li><strong>การแสดงผล Voronoi:</strong> แสดงพื้นที่ครอบคลุมของแต่ละเซ็นเซอร์</li>
-                            <li><strong>สถิติการคำนวณ:</strong> แสดงระยะทางสูงสุดและเฉลี่ย</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-2">การแก้ไขปัญหาที่พบบ่อย:</h3>
-                        <ul class="list-disc list-inside space-y-1 ml-4">
-                            <li><strong>ไม่มีผลลัพธ์:</strong> ตรวจสอบว่ามีหมู่บ้านอย่างน้อย 1 แห่ง</li>
-                            <li><strong>เซ็นเซอร์มากเกิน:</strong> จำนวนเซ็นเซอร์ควรน้อยกว่าหรือเท่ากับจำนวนหมู่บ้าน
-                            </li>
-                            <li><strong>แผนที่ไม่แสดง:</strong> กดปุ่ม "แสดงทั้งหมด" เพื่อปรับมุมมอง</li>
-                            <li><strong>อัปโหลด CSV ไม่ได้:</strong> ตรวจสอบรูปแบบไฟล์และชื่อคอลัมน์</li>
-                            <li><strong>Voronoi ไม่แสดง:</strong> กดปุ่มแสดง/ซ่อน Voronoi เพื่อเปิดการแสดงผล</li>
-                        </ul>
+
+                    <div class="text-xs space-y-1">
+                        <p class="font-semibold text-gray-700">พิกัด Sensor Gateway (อัปเดตสด):</p>
+                        <ul id="sensorListResult" class="pl-2 space-y-1 text-gray-600 font-mono"></ul>
                     </div>
                 </div>
+
+                <div class="p-3 bg-white border rounded-lg shadow-sm">
+                    <h3 class="text-xs font-bold text-gray-700 mb-2">คำอธิบายสัญลักษณ์</h3>
+                    <div class="flex items-center space-x-4 text-xs">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-600 rounded-full border border-white shadow mr-1"></div>
+                            <span>หมู่บ้าน</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-star text-red-600 mr-1"></i>
+                            <span>Sensor (ลากได้)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-200 border border-blue-400 mr-1 opacity-60"></div>
+                            <span>Voronoi</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="p-2 border-t text-[10px] text-center text-gray-400 bg-gray-50">
+                พัฒนาโดย: พัฒน์นรี, พิมชนก, พรชนก<br>
+                ที่ปรึกษา: อ.สาธิต ศิริวัชน์, อ.พรไพลิน ตาไฝ
+            </div>
+        </div>
+
+        <div class="flex-1 relative bg-gray-200">
+            <div id="map"></div>
+            
+            <div class="absolute top-4 right-4 z-10 flex flex-col space-y-2">
+                <button onclick="toggle3D()" class="bg-white p-2.5 rounded-lg shadow text-gray-700 hover:text-blue-600 transition" title="สลับมุมมอง 2D/3D">
+                    <i class="fas fa-cube text-lg"></i>
+                </button>
             </div>
         </div>
     </div>
-
 
     <script>
-        // --- Global State ---
+        const API_KEY = '0qulgAEf6qXR2wUTuPdT'; 
+        const START_LOC = [97.965, 19.302]; 
+        
         let map;
         let villages = [];
-        let villageLayer = L.layerGroup();
-        let resultLayer = L.layerGroup();
-        let voronoiLayer = L.layerGroup();
-        let currentResults = null;
-        let voronoiVisible = true;
-        let calculationStartTime = 0;
-        let calculationCancelled = false;
+        let villageMarkers = [];
+        let sensorMarkers = [];
+        let currentSensorsData = []; // เก็บตำแหน่ง Sensor ปัจจุบัน (รวมตอนลาก)
+        let is3D = true;
 
-        // Advanced Math Visualizations
-        let delaunayLayer = L.layerGroup();
-        let criticalPointsLayer = L.layerGroup();
-        let delaunayVisible = false;
-        let criticalPointsVisible = false;
-        let convergenceChart = null;
-
-        // --- UI Elements ---
-        const villageCountEl = document.getElementById('villageCount');
-        const sensorCountEl = document.getElementById('sensorCount');
-        const runBtn = document.getElementById('runBtn');
-        const runBtnText = document.getElementById('runBtnText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const resetBtn = document.getElementById('resetBtn');
-        const clearVillagesBtn = document.getElementById('clearVillagesBtn');
-        const numSensorsInput = document.getElementById('numSensors');
-        const resultsPanel = document.getElementById('resultsPanel');
-        const resultText = document.getElementById('resultText');
-        const optimalLocationsEl = document.getElementById('optimalLocations');
-        const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const calculationTimeEl = document.getElementById('calculationTime');
-        // Legacy UI elements (no longer used, but kept for backward compatibility)
-        // const totalCandidatesEl = document.getElementById('totalCandidates');
-        // const totalCombinationsEl = document.getElementById('totalCombinations');
-        // const processedCombinationsEl = document.getElementById('processedCombinations');
-        const maxDistanceKmEl = document.getElementById('maxDistanceKm');
-        const averageDistanceKmEl = document.getElementById('averageDistanceKm');
-        const exportBtn = document.getElementById('exportBtn');
-        const toggleVoronoiBtn = document.getElementById('toggleVoronoiBtn');
-        const fitBoundsBtn = document.getElementById('fitBoundsBtn');
-        const helpBtn = document.getElementById('helpBtn');
-        const floatingHelpBtn = document.getElementById('floatingHelpBtn');
-        const helpModal = document.getElementById('helpModal');
-        const closeHelpBtn = document.getElementById('closeHelpBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const progressInfo = document.getElementById('progressInfo');
-        const progressText = document.getElementById('progressText');
-        const progressDetails = document.getElementById('progressDetails');
-
-        // Tab Elements
-        const tabManual = document.getElementById('tabManual');
-        const tabCSV = document.getElementById('tabCSV');
-        const panelManual = document.getElementById('panelManual');
-        const panelCSV = document.getElementById('panelCSV');
-        const villageList = document.getElementById('villageList');
-
-        // --- Map Icons ---
-        const villageIcon = L.divIcon({
-            html: `<div class="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-md"></div>`,
-            className: '',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
         });
 
-        const optimalIcon = L.divIcon({
-            html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" class="w-8 h-8 drop-shadow-lg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
-            className: '',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        });
+        function initMap() {
+            map = new maplibregl.Map({
+                container: 'map',
+                style: `https://api.maptiler.com/maps/hybrid/style.json?key=${API_KEY}`,
+                center: START_LOC,
+                zoom: 13,
+                pitch: 60,
+                bearing: -10,
+                antialias: true
+            });
 
-        // --- Initialization ---
-        function initializeMap() {
-            // Initialize map centered on Mae Hong Son
-            map = L.map('map').setView([19.3015, 97.9646], 9);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
+            map.on('load', () => {
+                map.addSource('maptiler-terrain', {
+                    'type': 'raster-dem',
+                    'url': `https://api.maptiler.com/tiles/terrain-rgb/tiles.json?key=${API_KEY}`,
+                    'tileSize': 512,
+                    'maxzoom': 14
+                });
+                map.setTerrain({ 'source': 'maptiler-terrain', 'exaggeration': 1.5 });
 
-            villageLayer.addTo(map);
-            resultLayer.addTo(map);
-            voronoiLayer.addTo(map);
+                map.addSource('voronoi', {
+                    'type': 'geojson',
+                    'data': { type: 'FeatureCollection', features: [] }
+                });
+                
+                map.addLayer({
+                    'id': 'voronoi-fill',
+                    'type': 'fill',
+                    'source': 'voronoi',
+                    'paint': {
+                        'fill-color': ['get', 'color'],
+                        'fill-opacity': 0.25
+                    }
+                });
 
-            map.on('click', onMapClick);
+                map.addLayer({
+                    'id': 'voronoi-line',
+                    'type': 'line',
+                    'source': 'voronoi',
+                    'paint': {
+                        'line-color': '#ffffff',
+                        'line-width': 2,
+                        'line-opacity': 0.8
+                    }
+                });
+            });
+
+            map.on('click', (e) => {
+                addVillage(e.lngLat.lat, e.lngLat.lng);
+            });
+
+            map.getCanvas().style.cursor = 'crosshair';
+            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
         }
 
-        // --- UI Logic ---
-        function updateCounts() {
-            villageCountEl.textContent = villages.length;
-            sensorCountEl.textContent = currentResults ? currentResults.length : 0;
+        function addVillage(lat, lng) {
+            villages.push({ lat, lng });
+            const el = document.createElement('div');
+            el.className = 'village-marker';
+            const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+            villageMarkers.push(marker);
+            updateVillageUI();
         }
 
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            document.getElementById('notificationContainer').appendChild(notification);
-
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        function switchTab(tab) {
-            if (tab === 'manual') {
-                tabManual.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
-                tabManual.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
-
-                tabCSV.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
-                tabCSV.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
-
-                panelManual.classList.remove('hidden');
-                panelManual.classList.add('block');
-                panelCSV.classList.add('hidden');
-                panelCSV.classList.remove('block');
-
-                // Re-render list when switching to manual
-                renderVillageList();
-            } else {
-                tabCSV.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
-                tabCSV.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
-
-                tabManual.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200', 'hover:bg-gray-50');
-                tabManual.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
-
-                panelCSV.classList.remove('hidden');
-                panelCSV.classList.add('block');
-                panelManual.classList.add('hidden');
-                panelManual.classList.remove('block');
-            }
-        }
-
-        function renderVillageList() {
-            villageList.innerHTML = '';
-
+        function updateVillageUI() {
+            const list = document.getElementById('villageList');
+            const count = document.getElementById('villageCount');
+            count.innerText = `จำนวน: ${villages.length} แห่ง`;
+            
             if (villages.length === 0) {
-                villageList.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">ยังไม่มีข้อมูลหมู่บ้าน</div>';
+                list.innerHTML = '<li class="text-center text-gray-400 py-4 italic">ยังไม่มีข้อมูลหมู่บ้าน</li>';
                 return;
             }
 
-            villages.forEach((v, index) => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center space-x-2 bg-gray-50 p-2 rounded border border-gray-200';
-                row.innerHTML = `
-                    <div class="text-xs text-gray-500 w-6 text-center">#${index + 1}</div>
-                    <input type="number" step="0.0001" value="${v.lat}" 
-                        onchange="updateVillage(${index}, 'lat', this.value)"
-                        class="flex-1 w-20 px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Lat">
-                    <input type="number" step="0.0001" value="${v.lng}" 
-                        onchange="updateVillage(${index}, 'lng', this.value)"
-                        class="flex-1 w-20 px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Lng">
-                    <button onclick="removeVillage(${index})" class="text-red-400 hover:text-red-600 p-1">
+            let html = '';
+            villages.slice().reverse().forEach((v, i) => {
+                html += `
+                <li class="flex justify-between items-center bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                    <span class="text-xs font-mono">#${villages.length - i} : ${v.lat.toFixed(4)}, ${v.lng.toFixed(4)}</span>
+                    <button onclick="removeVillage(${villages.length - 1 - i})" class="text-red-400 hover:text-red-600">
                         <i class="fas fa-times"></i>
                     </button>
-                 `;
-                villageList.appendChild(row);
+                </li>`;
             });
-        }
-
-        function addNewVillageInput() {
-            // Default to map center or nearby last village
-            let lat = 19.3015;
-            let lng = 97.9646;
-
-            if (villages.length > 0) {
-                lat = villages[villages.length - 1].lat + 0.01;
-                lng = villages[villages.length - 1].lng + 0.01;
-            }
-
-            addVillage(L.latLng(lat, lng), false); // Pass false to suppress notification if desired
-        }
-
-        function updateVillage(index, field, value) {
-            const val = parseFloat(value);
-            if (isNaN(val)) return;
-
-            if (field === 'lat') villages[index].lat = val;
-            if (field === 'lng') villages[index].lng = val;
-
-            // Re-render markers (efficient enough for <100 points)
-            refreshMapMarkers();
+            list.innerHTML = html;
         }
 
         function removeVillage(index) {
-            villages.splice(index, 1);
-            refreshMapMarkers();
-            renderVillageList();
-            updateCounts();
+           clearAll();
         }
 
-        function refreshMapMarkers() {
-            villageLayer.clearLayers();
-            villages.forEach((v, i) => {
-                const marker = L.marker([v.lat, v.lng], { icon: villageIcon }).addTo(villageLayer);
-                marker.bindPopup(`หมู่บ้าน #${i + 1}<br>Lat: ${v.lat.toFixed(4)}<br>Lng: ${v.lng.toFixed(4)}`);
+        function clearAll() {
+            villages = [];
+            currentSensorsData = [];
+            villageMarkers.forEach(m => m.remove());
+            sensorMarkers.forEach(m => m.remove());
+            villageMarkers = [];
+            sensorMarkers = [];
+            if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: [] });
+            document.getElementById('resultPanel').classList.add('hidden');
+            updateVillageUI();
+        }
+
+        function calculateOptimization() {
+            const k = parseInt(document.getElementById('kValue').value);
+            if (villages.length < k) { alert(`จำนวนหมู่บ้าน (${villages.length}) ต้อง >= จำนวน Sensor (${k})`); return; }
+
+            const startTime = performance.now();
+            let sensors = initializeSensors(k);
+
+            for (let i = 0; i < 20; i++) {
+                const clusters = assignClusters(sensors);
+                const newSensors = updateCentroids(clusters, sensors);
+                let moved = 0;
+                for(let j=0; j<k; j++) moved += haversine(sensors[j], newSensors[j]);
+                sensors = newSensors;
+                if (moved < 0.001) break;
+            }
+
+            const endTime = performance.now();
+            currentSensorsData = sensors; // จำค่าเริ่มต้นไว้
+            displayResults(sensors, ((endTime - startTime) / 1000).toFixed(2));
+        }
+
+        function initializeSensors(k) {
+            let sensors = [];
+            let pool = [...villages];
+            for(let i=0; i<k; i++) {
+                const idx = Math.floor(Math.random() * pool.length);
+                sensors.push(pool[idx]);
+                pool.splice(idx, 1);
+            }
+            return sensors;
+        }
+
+        function assignClusters(sensors) {
+            const clusters = Array(sensors.length).fill().map(() => []);
+            villages.forEach(v => {
+                let closestIdx = 0, minD = Infinity;
+                sensors.forEach((s, i) => {
+                    const d = haversine(v, s);
+                    if (d < minD) { minD = d; closestIdx = i; }
+                });
+                clusters[closestIdx].push(v);
+            });
+            return clusters;
+        }
+
+        function updateCentroids(clusters, currentSensors) {
+            return currentSensors.map((s, i) => {
+                const cluster = clusters[i];
+                if (cluster.length === 0) return s;
+                const sumLat = cluster.reduce((sum, v) => sum + v.lat, 0);
+                const sumLng = cluster.reduce((sum, v) => sum + v.lng, 0);
+                return { lat: sumLat / cluster.length, lng: sumLng / cluster.length };
             });
         }
 
-        function downloadCSVTemplate() {
-            const csvContent = "data:text/csv;charset=utf-8," + "latitude,longitude\n19.3015,97.9646\n19.3500,98.0000";
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "template_villages.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        function haversine(p1, p2) {
+            const R = 6371; 
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function updateProgress(percent, text = '', details = '') {
-            progressFill.style.width = percent + '%';
-            if (text) progressText.textContent = text;
-            if (details) progressDetails.textContent = details;
+        // --- ฟังก์ชันแสดงผลและ Logic การลาก (Drag) ---
+        function displayResults(sensors, time) {
+            // ล้าง Marker เก่า
+            sensorMarkers.forEach(m => m.remove());
+            sensorMarkers = [];
+
+            sensors.forEach((s, i) => {
+                const el = document.createElement('div');
+                el.className = 'sensor-marker';
+                el.innerHTML = '<i class="fas fa-star"></i>'; // รูปดาว
+                
+                // สร้าง Marker แบบ Draggable (ลากได้)
+                const marker = new maplibregl.Marker({ 
+                    element: el, 
+                    anchor: 'center', 
+                    draggable: true // *** สำคัญ: เปิดให้ลากได้ ***
+                })
+                .setLngLat([s.lng, s.lat])
+                .setPopup(new maplibregl.Popup({offset: 10}).setHTML(`<b>Sensor Gateway #${i+1}</b><br><span class="text-xs text-gray-500">ลากเพื่อเปลี่ยนตำแหน่ง</span>`))
+                .addTo(map);
+
+                // --- Event: เมื่อลากเสร็จ (DragEnd) ---
+                marker.on('dragend', () => {
+                    const newLngLat = marker.getLngLat();
+                    // อัปเดตข้อมูลตำแหน่งใน Array
+                    currentSensorsData[i] = { lat: newLngLat.lat, lng: newLngLat.lng };
+                    
+                    // คำนวณค่าสถิติใหม่ทันที (Real-time Update)
+                    updateStatsAndVisuals(currentSensorsData, time);
+                });
+
+                sensorMarkers.push(marker);
+            });
+
+            // คำนวณและแสดงผลครั้งแรก
+            updateStatsAndVisuals(sensors, time);
+            document.getElementById('resultPanel').classList.remove('hidden');
         }
 
-        function toggleLoading(isLoading) {
-            if (isLoading) {
-                runBtn.disabled = true;
-                runBtnText.classList.add('hidden');
-                loadingSpinner.classList.remove('hidden');
-                progressBar.classList.remove('hidden');
-                progressInfo.classList.remove('hidden');
-                cancelBtn.classList.remove('hidden');
-                updateProgress(0, 'กำลังเริ่มต้นการคำนวณ...', '');
-                calculationCancelled = false;
-            } else {
-                runBtn.disabled = false;
-                runBtnText.classList.remove('hidden');
-                loadingSpinner.classList.add('hidden');
-                progressBar.classList.add('hidden');
-                progressInfo.classList.add('hidden');
-                cancelBtn.classList.add('hidden');
+        // ฟังก์ชันอัปเดตตัวเลขกราฟิกเมื่อมีการลากเปลี่ยนตำแหน่ง
+        function updateStatsAndVisuals(sensors, time) {
+            let maxDist = 0, totalDist = 0;
+            
+            // คำนวณระยะทางใหม่
+            villages.forEach(v => {
+                let minD = Infinity;
+                sensors.forEach(s => { 
+                    const d = haversine(v, s); 
+                    if(d < minD) minD = d; 
+                });
+                if(minD > maxDist) maxDist = minD;
+                totalDist += minD;
+            });
+
+            // อัปเดตตัวเลขหน้าเว็บ
+            document.getElementById('maxDistanceDisplay').innerHTML = `${maxDist.toFixed(2)} <span class="text-sm text-gray-500">กม.</span>`;
+            document.getElementById('avgDistanceDisplay').innerText = `${(totalDist / villages.length).toFixed(2)} กม.`;
+            if(time) document.getElementById('calcTimeDisplay').innerText = `${time} วินาที`;
+            
+            // อัปเดตลิสต์พิกัด
+            document.getElementById('sensorListResult').innerHTML = sensors.map((s, i) => 
+                `<li>#${i+1}: ${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}</li>`
+            ).join('');
+            
+            // วาด Voronoi ใหม่ตามตำแหน่งล่าสุด
+            drawVoronoi(sensors);
+        }
+
+        function drawVoronoi(sensors) {
+            if (sensors.length < 1) return;
+            const bounds = [97.0, 18.0, 99.0, 20.0]; 
+            const points = sensors.map(s => [s.lng, s.lat]);
+            const delaunay = d3.Delaunay.from(points);
+            const voronoi = delaunay.voronoi(bounds);
+            const features = [];
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+            for(let i=0; i<sensors.length; i++) {
+                const poly = voronoi.cellPolygon(i);
+                if (poly) {
+                    features.push({
+                        'type': 'Feature',
+                        'properties': { 'color': colors[i % colors.length] },
+                        'geometry': { 'type': 'Polygon', 'coordinates': [poly] }
+                    });
+                }
             }
+            if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: features });
         }
 
-        function cancelCalculation() {
-            calculationCancelled = true;
-            showNotification('กำลังยกเลิกการคำนวณ...', 'info');
-        }
-
-        // --- Data Handling ---
-        function addVillage(latlng, showNotify = true) {
-            const point = { lat: latlng.lat, lng: latlng.lng };
-            villages.push(point);
-            const marker = L.marker(latlng, { icon: villageIcon }).addTo(villageLayer);
-            marker.bindPopup(`หมู่บ้าน #${villages.length}<br>Lat: ${point.lat.toFixed(4)}<br>Lng: ${point.lng.toFixed(4)}`);
-            updateCounts();
-            renderVillageList(); // Sync UI
-            if (showNotify) showNotification(`เพิ่มหมู่บ้าน #${villages.length} เรียบร้อย`, 'success');
-        }
-
-        function onMapClick(e) {
-            addVillage(e.latlng);
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
+        function handleCSV(e) {
+            const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function (e) {
-                const text = e.target.result;
-                const points = parseCSV(text);
-                if (!points) return;
-
-                // Clear existing villages first
-                villages = [];
-                villageLayer.clearLayers();
-
-                points.forEach(p => addVillage(L.latLng(p.lat, p.lng), false));
-                showNotification(`อัปโหลดไฟล์ CSV สำเร็จ - เพิ่ม ${points.length} หมู่บ้าน`, 'success');
-                renderVillageList();
+            reader.onload = function(event) {
+                const lines = event.target.result.split('\n');
+                lines.slice(1).forEach(line => {
+                    const [lat, lng] = line.split(',').map(parseFloat);
+                    if (!isNaN(lat) && !isNaN(lng)) addVillage(lat, lng);
+                });
             };
             reader.readAsText(file);
-            event.target.value = ''; // Reset file input
         }
 
-        function parseCSV(text) {
-            try {
-                const lines = text.split('\n').filter(line => line.trim() !== '');
-                const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
-                const latIndex = header.indexOf('latitude');
-                const lonIndex = header.indexOf('longitude');
-
-                if (latIndex === -1 || lonIndex === -1) {
-                    alert('ไฟล์ CSV ต้องมีคอลัมน์ "latitude" และ "longitude"');
-                    return null;
-                }
-
-                return lines.slice(1).map(line => {
-                    const data = line.split(',');
-                    return {
-                        lat: parseFloat(data[latIndex]),
-                        lng: parseFloat(data[lonIndex])
-                    };
-                }).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
-            } catch (error) {
-                alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV');
-                console.error("CSV Parse Error:", error);
-                return null;
-            }
+        function toggle3D() {
+            is3D = !is3D;
+            map.easeTo({ pitch: is3D ? 60 : 0 });
         }
 
-        function clearVillages() {
-            villages = [];
-            villageLayer.clearLayers();
-            updateCounts();
-            renderVillageList();
-            showNotification('ล้างหมู่บ้านทั้งหมดแล้ว', 'info');
-        }
-
-        function resetAll() {
-            villages = [];
-            currentResults = null;
-            villageLayer.clearLayers();
-            resultLayer.clearLayers();
-            voronoiLayer.clearLayers();
-            updateCounts();
-            renderVillageList();
-            resultsPanel.classList.add('hidden');
-            showNotification('ล้างข้อมูลทั้งหมดแล้ว', 'info');
-        }
-
-        // --- Core Calculation Logic ---
-
-        /**
-         * Calculates distance between two lat/lon points using Haversine formula.
-         * @returns {number} Distance in kilometers.
-         */
-        function haversineDistance(p1, p2) {
-            const R = 6371; // Earth's radius in km
-            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-            const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        /**
-         * SENSOR PLACEMENT ALGORITHM: k-means / Centroidal Voronoi Tessellation with Least-Squares Centroids
-         * 
-         * This algorithm optimizes sensor locations using an iterative k-means-like approach
-         * combined with centroidal Voronoi tessellation. Unlike the previous k-center approach
-         * that minimized the worst-case distance, this method minimizes the sum of squared
-         * distances, providing better average performance across all villages.
-         * 
-         * Algorithm Overview:
-         * - Uses a k-means / centroidal Voronoi tessellation approach
-         * - Each iteration performs two steps:
-         *   (1) Assigns villages to nearest sensor (Voronoi partition)
-         *   (2) Moves each sensor to the least-squares center (centroid) of its assigned villages
-         * - Continues until convergence (sensor movement < tolerance) or max iterations reached
-         * - Objective: minimize sum of squared distances (good average performance),
-         *   instead of minimizing the worst-case distance as in the previous k-center approach
-         * 
-         * Initialization:
-         * - Uses k-means++ style initialization: first sensor is random, subsequent sensors
-         *   are placed at villages farthest from all previously chosen sensors
-         * 
-         * Convergence:
-         * - Algorithm converges when maximum sensor movement between iterations is below tolerance
-         * - This ensures sensors stabilize at optimal centroidal positions
-         * 
-         * @param {Array} villages - Array of village objects with { lat, lng } properties
-         * @param {number} numSensors - Number of sensors to place
-         * @param {Object} options - Optional configuration
-         * @param {number} options.maxIterations - Maximum iterations (default: 50)
-         * @param {number} options.tolerance - Convergence tolerance in km (default: 0.001 = 1 meter)
-         * @returns {Object} Result object with sensors, assignments, clusters, and metrics
-         */
-        function optimizeSensorsWithVoronoiLeastSquares(villages, numSensors, options = {}) {
-            // Validate inputs
-            if (!villages || villages.length === 0) {
-                throw new Error('Villages array is empty');
-            }
-            if (numSensors < 1 || numSensors > villages.length) {
-                throw new Error(`Invalid numSensors: ${numSensors} (must be 1-${villages.length})`);
-            }
-
-            // Set default options
-            const maxIterations = options.maxIterations || 50;
-            const tolerance = options.tolerance || 0.001; // 1 meter in km
-
-            // ============================================
-            // INITIALIZATION: k-means++ style
-            // ============================================
-            let sensors = [];
-
-            // Pick first sensor randomly from villages
-            const firstIndex = Math.floor(Math.random() * villages.length);
-            sensors.push({
-                lat: villages[firstIndex].lat,
-                lng: villages[firstIndex].lng
-            });
-
-            // For each remaining sensor, pick the village farthest from all chosen sensors
-            for (let s = 1; s < numSensors; s++) {
-                let maxMinDistance = -1;
-                let bestVillageIndex = -1;
-
-                for (let v = 0; v < villages.length; v++) {
-                    // Find minimum distance from this village to any chosen sensor
-                    let minDistToSensors = Infinity;
-                    for (let i = 0; i < sensors.length; i++) {
-                        const dist = haversineDistance(villages[v], sensors[i]);
-                        if (dist < minDistToSensors) {
-                            minDistToSensors = dist;
-                        }
-                    }
-
-                    // If this village is farther from all sensors than previous best, choose it
-                    if (minDistToSensors > maxMinDistance) {
-                        maxMinDistance = minDistToSensors;
-                        bestVillageIndex = v;
-                    }
-                }
-
-                // Add the farthest village as next sensor
-                if (bestVillageIndex >= 0) {
-                    sensors.push({
-                        lat: villages[bestVillageIndex].lat,
-                        lng: villages[bestVillageIndex].lng
-                    });
-                } else {
-                    // Fallback: random selection if something went wrong
-                    const randomIndex = Math.floor(Math.random() * villages.length);
-                    sensors.push({
-                        lat: villages[randomIndex].lat,
-                        lng: villages[randomIndex].lng
-                    });
-                }
-            }
-
-            // ============================================
-            // ITERATIVE OPTIMIZATION: k-means style
-            // ============================================
-            const energyHistory = [];
-
-            for (let iter = 0; iter < maxIterations; iter++) {
-                // Store old sensor positions to check convergence
-                const oldSensors = sensors.map(s => ({ lat: s.lat, lng: s.lng }));
-
-                // STEP 1: Voronoi Partition
-                const clusters = Array(numSensors).fill(null).map(() => []);
-                const assignments = [];
-                let currentIterationEnergy = 0; // Sum of Squared Distances for this iteration
-
-                // Assign each village to its nearest sensor (Voronoi partition)
-                for (let v = 0; v < villages.length; v++) {
-                    let nearestSensorIndex = 0;
-                    let minDistance = Infinity;
-
-                    // Find the nearest sensor to this village
-                    for (let s = 0; s < sensors.length; s++) {
-                        const dist = haversineDistance(villages[v], sensors[s]);
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            nearestSensorIndex = s;
-                        }
-                    }
-
-                    // Assign village to its nearest sensor's cluster
-                    clusters[nearestSensorIndex].push(v);
-                    assignments.push(nearestSensorIndex);
-
-                    // Accumulate Energy (SSD)
-                    currentIterationEnergy += (minDistance * minDistance);
-                }
-
-                // Record Energy for this iteration
-                energyHistory.push(currentIterationEnergy);
-
-                // STEP 2: Centroid Update (Least-Squares Center)
-                // Update each sensor to the centroid (geometric center) of its assigned villages
-                // The centroid minimizes the sum of squared distances to all villages in the cluster
-                for (let s = 0; s < sensors.length; s++) {
-                    if (clusters[s].length > 0) {
-                        // Compute centroid: average of all village positions in cluster
-                        // This is the least-squares center that minimizes sum of squared distances
-                        let sumLat = 0;
-                        let sumLng = 0;
-
-                        for (const villageIndex of clusters[s]) {
-                            sumLat += villages[villageIndex].lat;
-                            sumLng += villages[villageIndex].lng;
-                        }
-
-                        const centroidLat = sumLat / clusters[s].length;
-                        const centroidLng = sumLng / clusters[s].length;
-
-                        // Move sensor to the centroid of its cluster
-                        sensors[s] = {
-                            lat: centroidLat,
-                            lng: centroidLng
-                        };
-                    } else {
-                        // Handle empty cluster: move sensor to most underserved village
-                        // This prevents sensors from being unused
-                        let maxDistToAnySensor = -1;
-                        let mostUnderservedIndex = -1;
-
-                        for (let v = 0; v < villages.length; v++) {
-                            // Find minimum distance from this village to any sensor
-                            let minDistToSensors = Infinity;
-                            for (let i = 0; i < sensors.length; i++) {
-                                const dist = haversineDistance(villages[v], sensors[i]);
-                                if (dist < minDistToSensors) {
-                                    minDistToSensors = dist;
-                                }
-                            }
-
-                            // Track the village that is farthest from all sensors
-                            if (minDistToSensors > maxDistToAnySensor) {
-                                maxDistToAnySensor = minDistToSensors;
-                                mostUnderservedIndex = v;
-                            }
-                        }
-
-                        // Move empty sensor to most underserved village
-                        if (mostUnderservedIndex >= 0) {
-                            sensors[s] = {
-                                lat: villages[mostUnderservedIndex].lat,
-                                lng: villages[mostUnderservedIndex].lng
-                            };
-                        }
-                    }
-                }
-
-                // STEP 3: Convergence Check
-                // Compute maximum sensor movement between iterations
-                let maxMovement = 0;
-                for (let s = 0; s < sensors.length; s++) {
-                    const movement = haversineDistance(oldSensors[s], sensors[s]);
-                    if (movement > maxMovement) {
-                        maxMovement = movement;
-                    }
-                }
-
-                // If sensors moved less than tolerance, we've converged
-                // This means sensors have stabilized at optimal centroidal positions
-                if (maxMovement < tolerance) {
-                    console.log(`Converged after ${iter + 1} iterations (max movement: ${maxMovement.toFixed(6)} km)`);
-                    break;
-                }
-            }
-
-            // ============================================
-            // COMPUTE FINAL METRICS
-            // ============================================
-            let maxDistanceKm = 0;
-            let sumDistanceKm = 0;
-            const finalAssignments = [];
-            const finalClusters = Array(numSensors).fill(null).map(() => []);
-
-            for (let v = 0; v < villages.length; v++) {
-                let nearestSensorIndex = 0;
-                let minDistance = Infinity;
-
-                for (let s = 0; s < sensors.length; s++) {
-                    const dist = haversineDistance(villages[v], sensors[s]);
-                    if (dist < minDistance) {
-                        minDistance = dist;
-                        nearestSensorIndex = s;
-                    }
-                }
-
-                finalAssignments.push(nearestSensorIndex);
-                finalClusters[nearestSensorIndex].push(v);
-
-                if (minDistance > maxDistanceKm) {
-                    maxDistanceKm = minDistance;
-                }
-                sumDistanceKm += minDistance;
-            }
-
-            const averageDistanceKm = sumDistanceKm / villages.length;
-
-            // ============================================
-            // RETURN RESULTS
-            // ============================================
-            return {
-                sensors: sensors,
-                assignments: finalAssignments,
-                clusters: finalClusters,
-                metrics: {
-                    maxDistanceKm: maxDistanceKm,
-                    averageDistanceKm: averageDistanceKm,
-                    energyHistory: energyHistory
-                }
-            };
-        }
-
-        /**
-         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
-         * Calculates number of combinations C(n,k)
-         */
-        function calculateCombinations(n, k) {
-            if (k > n) return 0;
-            if (k === 0 || k === n) return 1;
-
-            let result = 1;
-            for (let i = 0; i < k; i++) {
-                result = result * (n - i) / (i + 1);
-            }
-            return Math.round(result);
-        }
-
-        /**
-         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
-         * Generates combinations of k elements from an array.
-         */
-        function* getCombinations(arr, k) {
-            if (k === 0) {
-                yield [];
-                return;
-            }
-            for (let i = 0; i <= arr.length - k; i++) {
-                const first = arr[i];
-                const rest = arr.slice(i + 1);
-                for (const combination of getCombinations(rest, k - 1)) {
-                    yield [first, ...combination];
-                }
-            }
-        }
-
-        /**
-         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
-         * Find best combination with timeout and progress tracking
-         */
-        function findBestCombinationWithTimeout(candidates, numSensors, villages, totalCombinations) {
-            const TIMEOUT_MS = 45000; // 45 seconds timeout
-            const startTime = Date.now();
-            let bestCombination = null;
-            let bestScore = Infinity;
-            let processedCombinations = 0;
-            let timeout = false;
-
-            // Enhanced dynamic limit based on number of sensors and complexity
-            let maxCombinations;
-            if (numSensors <= 2) {
-                maxCombinations = Math.min(totalCombinations, 300000); // 300k for 1-2 sensors
-            } else if (numSensors === 3) {
-                maxCombinations = Math.min(totalCombinations, 400000); // 400k for 3 sensors
-            } else if (numSensors === 4) {
-                maxCombinations = Math.min(totalCombinations, 200000); // 200k for 4 sensors
-            } else if (numSensors === 5) {
-                maxCombinations = Math.min(totalCombinations, 100000); // 100k for 5 sensors
-            } else {
-                maxCombinations = Math.min(totalCombinations, 50000); // 50k for 6+ sensors
-            }
-
-            console.log(`Max combinations for ${numSensors} sensors: ${maxCombinations.toLocaleString()}`);
-
-            // Use different strategies based on the problem size
-            let useSmartSampling = false;
-            if (totalCombinations > maxCombinations * 2) {
-                useSmartSampling = true;
-                console.log("Using smart sampling strategy for large problem");
-            }
-
-            const combinationsIterator = useSmartSampling ?
-                getSmartSampledCombinations(candidates, numSensors, maxCombinations) :
-                getCombinations(candidates, numSensors);
-
-            for (const combo of combinationsIterator) {
-                // Check if calculation was cancelled
-                if (calculationCancelled) {
-                    return {
-                        success: false,
-                        bestCombination: null,
-                        bestScore: Infinity,
-                        timeout: false,
-                        cancelled: true,
-                        processedCombinations: processedCombinations
-                    };
-                }
-
-                // Check timeout
-                if (Date.now() - startTime > TIMEOUT_MS) {
-                    timeout = true;
-                    break;
-                }
-
-                // Limit number of combinations to prevent infinite loops
-                if (processedCombinations >= maxCombinations) {
-                    timeout = true;
-                    break;
-                }
-
-                processedCombinations++;
-                let maxDistForThisCombo = 0;
-
-                for (const village of villages) {
-                    let min_dist_to_sensor = Infinity;
-                    for (const sensor of combo) {
-                        const dist = haversineDistance(village, sensor);
-                        if (dist < min_dist_to_sensor) {
-                            min_dist_to_sensor = dist;
-                        }
-                    }
-                    if (min_dist_to_sensor > maxDistForThisCombo) {
-                        maxDistForThisCombo = min_dist_to_sensor;
-                    }
-                }
-
-                if (maxDistForThisCombo < bestScore) {
-                    bestScore = maxDistForThisCombo;
-                    bestCombination = [...combo]; // Create a copy to avoid reference issues
-                }
-
-                // Update progress based on number of combinations
-                const updateInterval = numSensors <= 3 ? 500 : 2000; // Less frequent updates for better performance
-                if (processedCombinations % updateInterval === 0) {
-                    const progress = 20 + (processedCombinations / maxCombinations) * 70;
-                    const percent = Math.min(progress, 90);
-                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                    const rate = (processedCombinations / ((Date.now() - startTime) / 1000)).toFixed(0);
-
-                    updateProgress(
-                        percent,
-                        `กำลังคำนวณ... ${percent.toFixed(1)}%`,
-                        `ประมวลผล: ${processedCombinations.toLocaleString()}/${maxCombinations.toLocaleString()} | เวลา: ${elapsed}s | อัตรา: ${rate}/s`
-                    );
-                }
-            }
-
-            return {
-                success: bestCombination !== null,
-                bestCombination: bestCombination,
-                bestScore: bestScore,
-                timeout: timeout,
-                processedCombinations: processedCombinations,
-                usedSmartSampling: useSmartSampling
-            };
-        }
-
-        /**
-         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
-         * Smart sampling strategy for large problems - selects representative combinations
-         */
-        function* getSmartSampledCombinations(candidates, numSensors, maxSamples) {
-            const totalCandidates = candidates.length;
-            let sampledCount = 0;
-
-            // Strategy 1: Regular grid sampling
-            const step = Math.max(1, Math.floor(totalCandidates / Math.max(1, maxSamples / numSensors / 2)));
-            for (let i = 0; i < totalCandidates && sampledCount < maxSamples * 0.6; i += step) {
-                const endIndex = Math.min(i + step * numSensors, totalCandidates);
-                const subset = candidates.slice(i, endIndex);
-
-                if (subset.length >= numSensors) {
-                    for (const combo of getCombinations(subset, numSensors)) {
-                        if (sampledCount >= maxSamples * 0.6) break;
-                        yield combo;
-                        sampledCount++;
-                    }
-                }
-            }
-
-            // Strategy 2: Random sampling for remaining quota
-            const remainingSamples = maxSamples - sampledCount;
-            let attempts = 0;
-            const maxAttempts = remainingSamples * 10; // Prevent infinite loops
-
-            for (let i = 0; i < remainingSamples && sampledCount < maxSamples && attempts < maxAttempts; i++) {
-                const randomCombo = [];
-                const usedIndices = new Set();
-                let validCombo = true;
-
-                for (let j = 0; j < numSensors; j++) {
-                    let randomIndex;
-                    let attemptsForIndex = 0;
-
-                    do {
-                        randomIndex = Math.floor(Math.random() * totalCandidates);
-                        attemptsForIndex++;
-                        attempts++;
-
-                        if (attemptsForIndex > 100) {
-                            validCombo = false;
-                            break;
-                        }
-                    } while (usedIndices.has(randomIndex));
-
-                    if (!validCombo) break;
-
-                    usedIndices.add(randomIndex);
-                    randomCombo.push(candidates[randomIndex]);
-                }
-
-                if (validCombo && randomCombo.length === numSensors) {
-                    yield randomCombo;
-                    sampledCount++;
-                }
-            }
-        }
-
-        /**
-         * LEGACY ALGORITHM (not used anymore – replaced by k-means / Voronoi least-squares)
-         * Generates a grid of candidate points in the bounding box
-         */
-        function generateCandidateGrid(points, dimension) {
-            if (points.length === 0) return [];
-
-            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-            points.forEach(p => {
-                if (p.lat < minLat) minLat = p.lat;
-                if (p.lat > maxLat) maxLat = p.lat;
-                if (p.lng < minLng) minLng = p.lng;
-                if (p.lng > maxLng) maxLng = p.lng;
-            });
-
-            // Handle case with single point
-            if (points.length === 1) {
-                minLat -= 0.1; maxLat += 0.1;
-                minLng -= 0.1; maxLng += 0.1;
-            }
-
-            // Add padding to the bounding box
-            const latPadding = (maxLat - minLat) * 0.1 || 0.05;
-            const lngPadding = (maxLng - minLng) * 0.1 || 0.05;
-
-            minLat -= latPadding;
-            maxLat += latPadding;
-            minLng -= lngPadding;
-            maxLng += lngPadding;
-
-            const grid = [];
-            const latStep = dimension > 1 ? (maxLat - minLat) / (dimension - 1) : 0;
-            const lngStep = dimension > 1 ? (maxLng - minLng) / (dimension - 1) : 0;
-
-            for (let i = 0; i < dimension; i++) {
-                for (let j = 0; j < dimension; j++) {
-                    grid.push({
-                        lat: minLat + (i * latStep),
-                        lng: minLng + (j * lngStep)
-                    });
-                }
-            }
-            return grid;
-        }
-
-
-        function runOptimization() {
-            console.log('runOptimization called'); // Debug log
-            clearResults();
-            const numSensors = parseInt(numSensorsInput.value, 10);
-
-            console.log('Villages count:', villages.length); // Debug log
-            console.log('Num sensors:', numSensors); // Debug log
-
-            // Enhanced input validation
-            if (villages.length === 0) {
-                showNotification('กรุณาเพิ่มตำแหน่งหมู่บ้านอย่างน้อย 1 แห่ง', 'error');
-                return;
-            }
-
-            if (numSensors < 1 || numSensors > 10) {
-                showNotification('จำนวนเซ็นเซอร์ต้องอยู่ระหว่าง 1-10 ตัว', 'error');
-                return;
-            }
-
-            if (numSensors > villages.length) {
-                showNotification(`จำนวนเซ็นเซอร์ (${numSensors}) ไม่ควรมากกว่าจำนวนหมู่บ้าน (${villages.length})`, 'error');
-                return;
-            }
-
-            calculationStartTime = Date.now();
-            toggleLoading(true);
-            toggleLoading(true);
-            resultsPanel.classList.add('hidden');
-
-            // Auto-close menu on mobile to show map
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
             if (window.innerWidth < 768) {
-                toggleMobileMenu();
-            }
-
-            // Using setTimeout to allow UI to update before heavy computation
-            setTimeout(() => {
-                try {
-                    // ============================================
-                    // NEW ALGORITHM: k-means / Centroidal Voronoi with Least-Squares
-                    // ============================================
-                    updateProgress(10, 'กำลังเริ่มต้นอัลกอริธึม k-means...', '');
-
-                    // Call the new optimization function
-                    const result = optimizeSensorsWithVoronoiLeastSquares(villages, numSensors, {
-                        maxIterations: 30,
-                        tolerance: 0.001 // 1 meter in km
-                    });
-
-                    updateProgress(100, 'การคำนวณเสร็จสิ้น!', '');
-
-                    // Store results in global variables
-                    currentResults = result.sensors;
-                    // Note: result.assignments and result.clusters are also available if needed
-
-                    // Calculate computation time
-                    const calculationTime = ((Date.now() - calculationStartTime) / 1000).toFixed(2);
-
-                    // Display results
-                    displayResultsWithMetrics(result.sensors, result.metrics, calculationTime);
-
-                    toggleLoading(false);
-                    showNotification(`คำนวณเสร็จสิ้น! - ระยะทางสูงสุด: ${result.metrics.maxDistanceKm.toFixed(2)} กม.`, 'success');
-
-                } catch (error) {
-                    console.error('Calculation error:', error);
-                    showNotification(`เกิดข้อผิดพลาดในการคำนวณ: ${error.message}`, 'error');
-                    toggleLoading(false);
-                }
-
-            }, 100);
-        }
-
-        // --- Result Display ---
-        function clearResults() {
-            resultLayer.clearLayers();
-            voronoiLayer.clearLayers();
-            optimalLocationsEl.innerHTML = '';
-        }
-
-        function displayResults(optimalSensors, score) {
-            clearResults();
-
-            let locationsHTML = '<div class="space-y-2">';
-            optimalSensors.forEach((sensor, index) => {
-                L.marker([sensor.lat, sensor.lng], { icon: optimalIcon })
-                    .addTo(resultLayer)
-                    .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}<br>ระยะทางไกลที่สุด: ${score.toFixed(2)} กม.`);
-
-                locationsHTML += `
-                    <div class="flex items-center justify-between p-2 bg-white rounded border">
-                        <div>
-                            <span class="font-medium text-gray-700">จุดที่ ${index + 1}</span>
-                            <div class="text-xs text-gray-500">${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}</div>
-                        </div>
-                        <button onclick="copyToClipboard('${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}')" class="text-blue-500 hover:text-blue-700" title="คัดลอกพิกัด">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                `;
-            });
-            locationsHTML += '</div>';
-            optimalLocationsEl.innerHTML = locationsHTML;
-
-            drawVoronoi(optimalSensors);
-
-            resultText.textContent = `ระยะทางไกลที่สุดที่รับประกันได้: ${score.toFixed(2)} กม.`;
-            resultsPanel.classList.remove('hidden');
-            updateCounts();
-        }
-
-        /**
-         * Display results with new k-means algorithm metrics
-         * @param {Array} sensors - Array of sensor positions { lat, lng }
-         * @param {Object} metrics - Metrics object with maxDistanceKm and averageDistanceKm
-         * @param {string} calculationTime - Time taken in seconds
-         */
-        function displayResultsWithMetrics(sensors, metrics, calculationTime) {
-            clearResults();
-
-            // Add sensor markers to map
-            let locationsHTML = '<div class="space-y-2">';
-            sensors.forEach((sensor, index) => {
-                L.marker([sensor.lat, sensor.lng], { icon: optimalIcon })
-                    .addTo(resultLayer)
-                    .bindPopup(`จุดติดตั้ง #${index + 1}<br>Lat: ${sensor.lat.toFixed(4)}<br>Lng: ${sensor.lng.toFixed(4)}`);
-
-                locationsHTML += `
-                    <div class="flex items-center justify-between p-2 bg-white rounded border">
-                        <div>
-                            <span class="font-medium text-gray-700">จุดที่ ${index + 1}</span>
-                            <div class="text-xs text-gray-500">${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}</div>
-                        </div>
-                        <button onclick="copyToClipboard('${sensor.lat.toFixed(4)}, ${sensor.lng.toFixed(4)}')" class="text-blue-500 hover:text-blue-700" title="คัดลอกพิกัด">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                `;
-            });
-            locationsHTML += '</div>';
-            optimalLocationsEl.innerHTML = locationsHTML;
-
-            // Draw Voronoi regions based on final sensor positions
-            // Note: Voronoi is used ONLY for visualization here. The actual optimization
-            // uses the k-means-like / least-squares centroid algorithm.
-            drawVoronoiForSensors(sensors);
-
-            // Update result text with max distance
-            resultText.textContent = `ระยะทางสูงสุด: ${metrics.maxDistanceKm.toFixed(2)} กม.`;
-
-            // Update statistics panel
-            calculationTimeEl.textContent = calculationTime + ' วินาที';
-            maxDistanceKmEl.textContent = metrics.maxDistanceKm.toFixed(2);
-            averageDistanceKmEl.textContent = metrics.averageDistanceKm.toFixed(2);
-
-            resultsPanel.classList.remove('hidden');
-            updateCounts();
-
-            // Draw Energy Convergence Graph
-            if (metrics.energyHistory && metrics.energyHistory.length > 0) {
-                drawConvergenceGraph(metrics.energyHistory);
-            }
-
-            // Auto-zoom to show results
-            fitBounds();
-        }
-
-        function drawConvergenceGraph(history) {
-            const ctx = document.getElementById('energyChart').getContext('2d');
-            const container = document.getElementById('energyChartContainer');
-            if (!ctx || !container) return;
-
-            container.classList.remove('hidden');
-
-            if (convergenceChart) {
-                convergenceChart.destroy();
-            }
-
-            // Create gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-            convergenceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map((_, i) => i + 1),
-                    datasets: [{
-                        label: 'Energy (Sum of Squared Distances)',
-                        data: history,
-                        borderColor: '#3b82f6',
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#2563eb',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'การลู่เข้าสู่สมดุล (Convergence)'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return `Energy: ${context.raw.toFixed(4)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'รอบการคำนวณ (Iteration)'
-                            },
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'ความคลาดเคลื่อนรวม (Energy)'
-                            },
-                            ticks: {
-                                callback: function (value) {
-                                    return value.toFixed(2);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        /**
-         * LEGACY FUNCTION (kept for backward compatibility, but not used by new algorithm)
-         * Old Voronoi drawing function that used map projection
-         */
-        function drawVoronoi(points) {
-            // Recalculate bounds to ensure Voronoi covers all points
-            const allPoints = [...villages, ...points];
-            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-            allPoints.forEach(p => {
-                if (p.lat < minLat) minLat = p.lat;
-                if (p.lat > maxLat) maxLat = p.lat;
-                if (p.lng < minLng) minLng = p.lng;
-                if (p.lng > maxLng) maxLng = p.lng;
-            });
-            const latPadding = (maxLat - minLat) * 0.2 || 0.1;
-            const lngPadding = (maxLng - minLng) * 0.2 || 0.1;
-
-            const mapBounds = L.latLngBounds([
-                [minLat - latPadding, minLng - lngPadding],
-                [maxLat + latPadding, maxLng + lngPadding]
-            ]);
-
-            const topLeft = map.project(mapBounds.getNorthWest());
-            const bottomRight = map.project(mapBounds.getSouthEast());
-
-            const voronoiBounds = [topLeft.x, topLeft.y, bottomRight.x, bottomRight.y];
-
-            const projectedPoints = points.map(p => {
-                const projected = map.project(L.latLng(p.lat, p.lng));
-                return [projected.x, projected.y];
-            });
-
-            const delaunay = d3.Delaunay.from(projectedPoints);
-            const voronoi = delaunay.voronoi(voronoiBounds);
-
-            const colors = d3.scaleOrdinal(d3.schemeCategory10);
-
-            for (let i = 0; i < points.length; i++) {
-                const cell = voronoi.cellPolygon(i);
-                if (cell) {
-                    const latlngs = cell.map(p => map.unproject(L.point(p[0], p[1])));
-                    L.polygon(latlngs, {
-                        color: colors(i),
-                        fillColor: colors(i),
-                        fillOpacity: 0.15,
-                        weight: 2
-                    }).addTo(voronoiLayer);
-                }
-            }
-        }
-
-        /**
-         * NEW FUNCTION: Draw Voronoi regions for final sensor positions
-         * 
-         * This function visualizes the Voronoi diagram based on the final sensor locations
-         * returned by optimizeSensorsWithVoronoiLeastSquares. The Voronoi cells represent
-         * the regions where each sensor is the nearest sensor.
-         * 
-         * Note: Voronoi is used ONLY for visualization here. The actual optimization
-         * uses the k-means-like / least-squares centroid algorithm implemented in
-         * optimizeSensorsWithVoronoiLeastSquares.
-         * 
-         * @param {Array} sensors - Array of sensor positions { lat, lng } from the optimization result
-         */
-        function drawVoronoiForSensors(sensors) {
-            // Clear any existing Voronoi layers
-            voronoiLayer.clearLayers();
-
-            if (!sensors || sensors.length === 0) {
-                console.warn('No sensors provided for Voronoi visualization');
-                return;
-            }
-
-            // Compute bounding box for Voronoi diagram
-            // Use both villages and sensors to ensure full coverage
-            const allPoints = [...villages, ...sensors];
-            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-
-            allPoints.forEach(p => {
-                if (p.lat < minLat) minLat = p.lat;
-                if (p.lat > maxLat) maxLat = p.lat;
-                if (p.lng < minLng) minLng = p.lng;
-                if (p.lng > maxLng) maxLng = p.lng;
-            });
-
-            // Add padding to ensure Voronoi cells extend beyond the data points
-            const latPadding = (maxLat - minLat) * 0.2 || 0.1;
-            const lngPadding = (maxLng - minLng) * 0.2 || 0.1;
-
-            minLat -= latPadding;
-            maxLat += latPadding;
-            minLng -= lngPadding;
-            maxLng += lngPadding;
-
-            // Create Delaunay triangulation from sensor positions
-            // d3.Delaunay.from expects: from(data, xAccessor, yAccessor)
-            // For geographic coordinates: x = longitude, y = latitude
-            const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
-
-            // Create Voronoi diagram with bounds [x0, y0, x1, y1] = [minLng, minLat, maxLng, maxLat]
-            const voronoi = delaunay.voronoi([minLng, minLat, maxLng, maxLat]);
-
-            // Color scheme for Voronoi cells
-            const colors = d3.scaleOrdinal(d3.schemeCategory10);
-
-            // Draw Voronoi cell for each sensor
-            for (let i = 0; i < sensors.length; i++) {
-                const cell = voronoi.cellPolygon(i);
-
-                if (cell && cell.length > 0) {
-                    // Convert Voronoi polygon coordinates to Leaflet LatLng format
-                    // Voronoi returns [x, y] = [lng, lat] pairs, Leaflet needs [lat, lng]
-                    const latlngs = cell.map(point => [point[1], point[0]]); // [lat, lng] for Leaflet
-
-                    // Create and add polygon to Voronoi layer
-                    L.polygon(latlngs, {
-                        color: colors(i),
-                        fillColor: colors(i),
-                        fillOpacity: 0.15,
-                        weight: 2,
-                        opacity: 0.8
-                    }).addTo(voronoiLayer);
-                }
-            }
-        }
-
-        /**
-         * Draw Delaunay Triangulation (Dual Graph of Voronoi)
-         */
-        function drawDelaunayForSensors(sensors) {
-            delaunayLayer.clearLayers();
-            if (!sensors || sensors.length < 3) return;
-
-            const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
-            const { triangles } = delaunay;
-
-            for (let i = 0; i < triangles.length; i += 3) {
-                const t0 = triangles[i];
-                const t1 = triangles[i + 1];
-                const t2 = triangles[i + 2];
-
-                // Draw lines between connected sensors
-                const p0 = [sensors[t0].lat, sensors[t0].lng];
-                const p1 = [sensors[t1].lat, sensors[t1].lng];
-                const p2 = [sensors[t2].lat, sensors[t2].lng];
-
-                L.polyline([p0, p1], { color: '#6366f1', weight: 1, opacity: 0.6, dashArray: '5, 5' }).addTo(delaunayLayer);
-                L.polyline([p1, p2], { color: '#6366f1', weight: 1, opacity: 0.6, dashArray: '5, 5' }).addTo(delaunayLayer);
-                L.polyline([p2, p0], { color: '#6366f1', weight: 1, opacity: 0.6, dashArray: '5, 5' }).addTo(delaunayLayer);
-            }
-        }
-
-        /**
-         * Draw Critical Points (Voronoi Vertices - Largest Empty Circle Centers)
-         */
-        function drawCriticalPoints(sensors) {
-            criticalPointsLayer.clearLayers();
-            if (!sensors || sensors.length < 2) return;
-
-            // Compute bounds to clip Voronoi
-            const allPoints = [...villages, ...sensors];
-            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-
-            allPoints.forEach(p => {
-                if (p.lat < minLat) minLat = p.lat;
-                if (p.lat > maxLat) maxLat = p.lat;
-                if (p.lng < minLng) minLng = p.lng;
-                if (p.lng > maxLng) maxLng = p.lng;
-            });
-
-            // Add slight padding
-            const latPadding = (maxLat - minLat) * 0.1;
-            const lngPadding = (maxLng - minLng) * 0.1;
-
-            const delaunay = d3.Delaunay.from(sensors, d => d.lng, d => d.lat);
-            const voronoi = delaunay.voronoi([minLng - lngPadding, minLat - latPadding, maxLng + lngPadding, maxLat + latPadding]);
-
-            // Voronoi vertices are returned as [x, y] = [lng, lat]
-            // We need to filter those that are somewhat relevant or just show them all inside bounds
-            // circumcenters gives the vertices
-            const circumcenters = voronoi.circumcenters;
-
-            for (let i = 0; i < circumcenters.length; i += 2) {
-                const lng = circumcenters[i];
-                const lat = circumcenters[i + 1];
-
-                // Simple bounds check
-                if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
-                    L.marker([lat, lng], { icon: criticalIcon })
-                        .bindPopup("Critical Point<br>(Voronoi Vertex)")
-                        .addTo(criticalPointsLayer);
-                }
-            }
-        }
-
-
-        // --- New Features ---
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('คัดลอกพิกัดแล้ว', 'success');
-            }).catch(() => {
-                showNotification('ไม่สามารถคัดลอกได้', 'error');
-            });
-        }
-
-        function exportResults() {
-            if (!currentResults) {
-                showNotification('ไม่มีผลลัพธ์ให้ส่งออก', 'error');
-                return;
-            }
-
-            const csvContent = [
-                'ลำดับ,Latitude,Longitude',
-                ...currentResults.map((sensor, index) =>
-                    `${index + 1},${sensor.lat.toFixed(6)},${sensor.lng.toFixed(6)}`
-                )
-            ].join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `sensor_locations_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            showNotification('ส่งออกผลลัพธ์เรียบร้อย', 'success');
-        }
-
-        function toggleVoronoi() {
-            voronoiVisible = !voronoiVisible;
-            if (voronoiVisible) {
-                voronoiLayer.addTo(map);
-                toggleVoronoiBtn.innerHTML = '<i class="fas fa-layer-group"></i>';
-                toggleVoronoiBtn.title = 'ซ่อน Voronoi';
+                sidebar.classList.toggle('active');
+                sidebar.classList.remove('hidden');
             } else {
-                map.removeLayer(voronoiLayer);
-                toggleVoronoiBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                toggleVoronoiBtn.title = 'แสดง Voronoi';
+                 sidebar.classList.toggle('hidden');
             }
         }
 
-        function toggleDelaunay() {
-            delaunayVisible = !delaunayVisible;
-            const btn = document.getElementById('toggleDelaunayBtn');
-
-            if (delaunayVisible) {
-                // If we have current results, draw delaunay
-                if (currentResults) {
-                    drawDelaunayForSensors(currentResults);
-                }
-                delaunayLayer.addTo(map);
-                btn.classList.add('bg-blue-100', 'text-blue-600', 'border-blue-300');
-                btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
-            } else {
-                map.removeLayer(delaunayLayer);
-                btn.classList.remove('bg-blue-100', 'text-blue-600', 'border-blue-300');
-                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
-            }
-        }
-
-        function toggleCriticalPoints() {
-            criticalPointsVisible = !criticalPointsVisible;
-            const btn = document.getElementById('toggleCriticalBtn');
-
-            if (criticalPointsVisible) {
-                if (currentResults) {
-                    drawCriticalPoints(currentResults);
-                }
-                criticalPointsLayer.addTo(map);
-                btn.classList.add('bg-red-100', 'text-red-600', 'border-red-300');
-                btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
-            } else {
-                map.removeLayer(criticalPointsLayer);
-                btn.classList.remove('bg-red-100', 'text-red-600', 'border-red-300');
-                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
-            }
-        }
-
-        function fitBounds() {
-            const allLayers = [
-                ...villageLayer.getLayers(),
-                ...resultLayer.getLayers()
-            ];
-
-            if (allLayers.length === 0) {
-                // Only show error if explicitly triggered by button, not auto-zoom
-                // But since we can't easily distinguish here, checking villages length is a proxy
-                if (villages.length === 0) {
-                    showNotification('ไม่มีข้อมูลให้แสดง', 'error');
-                }
-                return;
-            }
-
-            const group = new L.featureGroup(allLayers);
-            map.fitBounds(group.getBounds().pad(0.1));
-        }
-
-        function showHelp() {
-            helpModal.classList.remove('hidden');
-        }
-
-        function hideHelp() {
-            helpModal.classList.add('hidden');
-        }
-
-        // Mobile Drawer Logic
-        function toggleMobileMenu() {
-            const panel = document.getElementById('controlPanel');
-            const isHidden = panel.classList.contains('translate-x-[-100%]');
-
-            if (isHidden) {
-                // Open Drawer
-                panel.classList.remove('translate-x-[-100%]');
-                document.body.style.overflow = 'hidden'; // Prevent background scrolling
-            } else {
-                // Close Drawer
-                panel.classList.add('translate-x-[-100%]');
-                document.body.style.overflow = ''; // Restore scrolling
-            }
-        }
-
-        // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Ensure all elements exist before adding event listeners
-            const csvVillages = document.getElementById('csvVillages');
-            const runBtn = document.getElementById('runBtn');
-            const resetBtn = document.getElementById('resetBtn');
-            const clearVillagesBtn = document.getElementById('clearVillagesBtn');
-            const exportBtn = document.getElementById('exportBtn');
-            const toggleVoronoiBtn = document.getElementById('toggleVoronoiBtn');
-            const fitBoundsBtn = document.getElementById('fitBoundsBtn');
-            const helpBtn = document.getElementById('helpBtn');
-            const floatingHelpBtn = document.getElementById('floatingHelpBtn');
-            const closeHelpBtn = document.getElementById('closeHelpBtn');
-            const cancelBtn = document.getElementById('cancelBtn');
-
-            if (csvVillages) csvVillages.addEventListener('change', handleFileUpload);
-            if (runBtn) {
-                console.log('Adding click listener to run button'); // Debug log
-                runBtn.addEventListener('click', (e) => {
-                    console.log('Run button clicked'); // Debug log
-                    e.preventDefault();
-                    runOptimization();
-                });
-            }
-            if (resetBtn) resetBtn.addEventListener('click', resetAll);
-            if (clearVillagesBtn) clearVillagesBtn.addEventListener('click', clearVillages);
-            if (exportBtn) exportBtn.addEventListener('click', exportResults);
-            if (toggleVoronoiBtn) toggleVoronoiBtn.addEventListener('click', toggleVoronoi);
-
-            const toggleDelaunayBtn = document.getElementById('toggleDelaunayBtn');
-            if (toggleDelaunayBtn) toggleDelaunayBtn.addEventListener('click', toggleDelaunay);
-
-            const toggleCriticalBtn = document.getElementById('toggleCriticalBtn');
-            if (toggleCriticalBtn) toggleCriticalBtn.addEventListener('click', toggleCriticalPoints);
-
-            if (fitBoundsBtn) fitBoundsBtn.addEventListener('click', fitBounds);
-            if (helpBtn) helpBtn.addEventListener('click', showHelp);
-            if (floatingHelpBtn) floatingHelpBtn.addEventListener('click', showHelp);
-            if (helpBtn) helpBtn.addEventListener('click', showHelp);
-            if (floatingHelpBtn) floatingHelpBtn.addEventListener('click', showHelp);
-            if (closeHelpBtn) closeHelpBtn.addEventListener('click', hideHelp);
-            if (cancelBtn) cancelBtn.addEventListener('click', cancelCalculation);
-
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-        });
-
-        // Close modal when clicking outside
-        if (helpModal) {
-            helpModal.addEventListener('click', (e) => {
-                if (e.target === helpModal) {
-                    hideHelp();
-                }
-            });
-        }
-
-        // Initialize map and other components
-        initializeMap();
-        updateCounts();
-
-        // Show welcome message
-        setTimeout(() => {
-            showNotification('ยินดีต้อนรับสู่เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ', 'info');
-        }, 1000);
-
-
-
-        // Handle window resize events
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) {
-                // Reset panel state on desktop
-                const panel = document.getElementById('controlPanel');
-                panel.classList.remove('translate-x-[-100%]');
-                document.body.style.overflow = '';
-            }
-
-            if (map) {
-                setTimeout(() => map.invalidateSize(), 100);
+            if (window.innerWidth >= 768) {
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('sidebar').classList.remove('hidden');
             }
         });
     </script>
 </body>
-
 </html>
