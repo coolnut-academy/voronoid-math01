@@ -405,6 +405,9 @@
             // ถ้าลบหมดให้เคลียร์ค่าทั้งหมดเพื่อความสะอาด
             if (villages.length === 0) {
                 clearAll();
+            } else if (currentSensorsData.length > 0) {
+                // ถ้ายังมีข้อมูล Sensor อยู่ ให้คำนวณเส้น Max Distance ใหม่
+                updateStatsAndVisuals(currentSensorsData);
             }
         }
 
@@ -415,6 +418,7 @@
             sensorMarkers.forEach(m => m.remove());
             villageMarkers = [];
             sensorMarkers = [];
+            if (map.getSource('max-dist-line')) map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [] });
             if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: [] });
             document.getElementById('resultPanel').classList.add('hidden');
             updateVillageUI();
@@ -571,6 +575,8 @@
                     }
                 };
                 map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [lineFeature] });
+            } else if (map.getSource('max-dist-line')) {
+                map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [] });
             }
         }
 
