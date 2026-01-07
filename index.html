@@ -2,697 +2,733 @@
 <html lang="th">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ - โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <title>เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ - โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</title>
 
-    <link rel="icon" type="image/png" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
+          <link rel="icon" type="image/png" href="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+          <script src="https://cdn.tailwindcss.com"></script>
 
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+          <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+          <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <script src="https://d3js.org/d3.v7.min.js"></script>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Sarabun', sans-serif;
-            overflow: hidden;
-        }
+          <style>
+                    body {
+                              margin: 0;
+                              padding: 0;
+                              font-family: 'Sarabun', sans-serif;
+                              overflow: hidden;
+                    }
 
-        #map {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-        }
+                    #map {
+                              position: absolute;
+                              top: 0;
+                              bottom: 0;
+                              width: 100%;
+                    }
 
-        .village-marker {
-            width: 14px;
-            height: 14px;
-            background-color: #2563EB;
-            border: 2px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-        }
+                    .village-marker {
+                              width: 14px;
+                              height: 14px;
+                              background-color: #2563EB;
+                              border: 2px solid white;
+                              border-radius: 50%;
+                              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                              cursor: pointer;
+                    }
 
-        .sensor-marker {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            color: #DC2626;
-            /* สีแดง */
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-            font-size: 24px;
-            animation: popIn 0.3s ease-out;
-            cursor: move;
-            /* เปลี่ยนเคอร์เซอร์เป็นรูปมือจับ */
-            transition: transform 0.1s;
-        }
+                    .sensor-marker {
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              width: 32px;
+                              height: 32px;
+                              color: #DC2626;
+                              /* สีแดง */
+                              filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+                              font-size: 24px;
+                              animation: popIn 0.3s ease-out;
+                              cursor: move;
+                              /* เปลี่ยนเคอร์เซอร์เป็นรูปมือจับ */
+                              transition: transform 0.1s;
+                    }
 
-        /* Effect ตอนกำลังลาก */
-        .sensor-marker:active {
-            transform: scale(1.2);
-            cursor: grabbing;
-        }
+                    /* Effect ตอนกำลังลาก */
+                    .sensor-marker:active {
+                              transform: scale(1.2);
+                              cursor: grabbing;
+                    }
 
-        @keyframes popIn {
-            0% {
-                transform: scale(0);
-            }
+                    @keyframes popIn {
+                              0% {
+                                        transform: scale(0);
+                              }
 
-            80% {
-                transform: scale(1.2);
-            }
+                              80% {
+                                        transform: scale(1.2);
+                              }
 
-            100% {
-                transform: scale(1);
-            }
-        }
+                              100% {
+                                        transform: scale(1);
+                              }
+                    }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 50vh;
-                width: 100% !important;
-                border-radius: 20px 20px 0 0;
-                transform: translateY(100%);
-                transition: transform 0.3s ease-in-out;
-                z-index: 50;
-            }
+                    @media (max-width: 768px) {
+                              .sidebar {
+                                        position: absolute;
+                                        bottom: 0;
+                                        left: 0;
+                                        right: 0;
+                                        height: 50vh;
+                                        width: 100% !important;
+                                        border-radius: 20px 20px 0 0;
+                                        transform: translateY(100%);
+                                        transition: transform 0.3s ease-in-out;
+                                        z-index: 50;
+                              }
 
-            .sidebar.active {
-                transform: translateY(0);
-            }
-        }
-    </style>
+                              .sidebar.active {
+                                        transform: translateY(0);
+                              }
+                    }
+          </style>
 </head>
 
 <body class="bg-gray-100">
 
-    <div
-        class="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm h-16 flex items-center justify-between px-4">
-        <div class="flex items-center space-x-3">
-            <div
-                class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow overflow-hidden border border-gray-100">
-                <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png" alt="School Logo"
-                    class="w-full h-full object-contain p-0.5">
-            </div>
-            <div>
-                <h1 class="text-sm md:text-base font-bold text-blue-900 leading-tight">
-                    เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ
-                </h1>
-                <p class="text-[10px] md:text-xs text-gray-600">
-                    โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ (โครงงาน YSC 28YMAN00218T)
-                </p>
-            </div>
-        </div>
-
-        <button id="menuToggle" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded">
-            <i class="fas fa-bars text-xl"></i>
-        </button>
-    </div>
-
-    <div class="flex h-screen pt-16 relative">
-
-        <div id="sidebar"
-            class="sidebar w-full md:w-[400px] bg-white shadow-xl flex flex-col h-full border-r z-30 md:relative hidden md:flex">
-
-            <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="toggleSidebar()">
-                <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 space-y-4">
-
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <h2 class="font-bold text-blue-800 flex items-center mb-3">
-                        <span
-                            class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">1</span>
-                        ข้อมูลหมู่บ้าน (Villages)
-                    </h2>
-
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button id="btnClickMode"
-                            class="bg-white border border-blue-300 text-blue-700 py-2 px-3 rounded-lg text-sm hover:bg-blue-50 transition shadow-sm active-mode">
-                            <i class="fas fa-map-marker-alt mr-1"></i> จิ้มในแผนที่
-                        </button>
-                        <button onclick="showCSVInstructions()"
-                            class="bg-white border border-blue-300 text-blue-700 py-2 px-3 rounded-lg text-sm hover:bg-blue-50 transition shadow-sm cursor-pointer text-center">
-                            <i class="fas fa-file-upload mr-1"></i> อัปโหลด CSV
-                        </button>
-                        <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSV(event)">
+          <div
+                    class="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm h-16 flex items-center justify-between px-4">
+                    <div class="flex items-center space-x-3">
+                              <div
+                                        class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow overflow-hidden border border-gray-100">
+                                        <img src="https://img2.pic.in.th/pic/LOGO-HONGSON-METAVERSE-MODEL-2.png"
+                                                  alt="School Logo" class="w-full h-full object-contain p-0.5">
+                              </div>
+                              <div>
+                                        <h1 class="text-sm md:text-base font-bold text-blue-900 leading-tight">
+                                                  เว็บแอปสำหรับหาตำแหน่งติดตั้งเสาเตือนภัยอุทุกภัยอัจฉริยะ
+                                        </h1>
+                                        <p class="text-[10px] md:text-xs text-gray-600">
+                                                  โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ (โครงงาน YSC 28YMAN00218T)
+                                        </p>
+                              </div>
                     </div>
 
-                    <div class="bg-white rounded-lg border border-gray-200 h-32 overflow-y-auto p-2 mb-2">
-                        <ul id="villageList" class="space-y-1 text-sm text-gray-600">
-                            <li class="text-center text-gray-400 py-4 italic">ยังไม่มีข้อมูลหมู่บ้าน</li>
-                        </ul>
-                    </div>
-
-                    <div class="flex justify-between items-center text-xs text-gray-500">
-                        <span id="villageCount">จำนวน: 0 แห่ง</span>
-                        <button onclick="clearAll()"
-                            class="text-red-500 hover:text-red-700 underline">ล้างข้อมูล</button>
-                    </div>
-                </div>
-
-                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                    <h2 class="font-bold text-purple-800 flex items-center mb-3">
-                        <span
-                            class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs mr-2">2</span>
-                        ตั้งค่าและคำนวณ (Optimization)
-                    </h2>
-
-                    <div class="mb-4">
-                        <label class="block text-sm text-gray-700 mb-1 font-semibold">จำนวน Sensor Gateway (k)</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" id="kValue" value="3" min="1" max="10"
-                                class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-center font-bold text-lg">
-                            <span class="text-sm text-gray-500">จุด</span>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">*ใช้เกณฑ์ Minimax & Least Squares</p>
-                    </div>
-
-                    <button onclick="calculateOptimization()"
-                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transform transition active:scale-95 flex items-center justify-center">
-                        <i class="fas fa-calculator mr-2"></i> คำนวณตำแหน่ง
+                    <button id="menuToggle" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded">
+                              <i class="fas fa-bars text-xl"></i>
                     </button>
-                </div>
+          </div>
 
-                <div id="resultPanel"
-                    class="hidden bg-green-50 p-4 rounded-xl border border-green-100 animation-fade-in">
-                    <h2 class="font-bold text-green-800 flex items-center justify-between mb-2">
-                        <span><i class="fas fa-check-circle mr-2"></i> ผลการคำนวณ</span>
-                        <span
-                            class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full animate-pulse">ปรับหมุดได้
-                            (Draggable)</span>
-                    </h2>
+          <div class="flex h-screen pt-16 relative">
 
-                    <div class="bg-white p-3 rounded-lg border border-green-200 shadow-sm mb-3 text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">ระยะทางสูงสุด (Max Distance)</p>
-                        <p class="text-3xl font-bold text-green-600" id="maxDistanceDisplay">0.00 <span
-                                class="text-sm text-gray-500">กม.</span></p>
-                        <p class="text-[10px] text-gray-400">(ยิ่งน้อยยิ่งดี / ปรับเปลี่ยนเมื่อลากหมุด)</p>
+                    <div id="sidebar"
+                              class="sidebar w-full md:w-[400px] bg-white shadow-xl flex flex-col h-full border-r z-30 md:relative hidden md:flex">
+
+                              <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="toggleSidebar()">
+                                        <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                              </div>
+
+                              <div class="flex-1 overflow-y-auto p-4 space-y-4">
+
+                                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                                  <h2 class="font-bold text-blue-800 flex items-center mb-3">
+                                                            <span
+                                                                      class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                                                            ข้อมูลหมู่บ้าน (Villages)
+                                                  </h2>
+
+                                                  <div class="grid grid-cols-2 gap-2 mb-3">
+                                                            <button id="btnClickMode"
+                                                                      class="bg-white border border-blue-300 text-blue-700 py-2 px-3 rounded-lg text-sm hover:bg-blue-50 transition shadow-sm active-mode">
+                                                                      <i class="fas fa-map-marker-alt mr-1"></i>
+                                                                      จิ้มในแผนที่
+                                                            </button>
+                                                            <button onclick="showCSVInstructions()"
+                                                                      class="bg-white border border-blue-300 text-blue-700 py-2 px-3 rounded-lg text-sm hover:bg-blue-50 transition shadow-sm cursor-pointer text-center">
+                                                                      <i class="fas fa-file-upload mr-1"></i> อัปโหลด
+                                                                      CSV
+                                                            </button>
+                                                            <input type="file" id="csvInput" accept=".csv"
+                                                                      class="hidden" onchange="handleCSV(event)">
+                                                  </div>
+
+                                                  <div
+                                                            class="bg-white rounded-lg border border-gray-200 h-32 overflow-y-auto p-2 mb-2">
+                                                            <ul id="villageList"
+                                                                      class="space-y-1 text-sm text-gray-600">
+                                                                      <li class="text-center text-gray-400 py-4 italic">
+                                                                                ยังไม่มีข้อมูลหมู่บ้าน</li>
+                                                            </ul>
+                                                  </div>
+
+                                                  <div class="flex justify-between items-center text-xs text-gray-500">
+                                                            <span id="villageCount">จำนวน: 0 แห่ง</span>
+                                                            <button onclick="clearAll()"
+                                                                      class="text-red-500 hover:text-red-700 underline">ล้างข้อมูล</button>
+                                                  </div>
+                                        </div>
+
+                                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                                                  <h2 class="font-bold text-purple-800 flex items-center mb-3">
+                                                            <span
+                                                                      class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                                                            ตั้งค่าและคำนวณ (Optimization)
+                                                  </h2>
+
+                                                  <div class="mb-4">
+                                                            <label
+                                                                      class="block text-sm text-gray-700 mb-1 font-semibold">จำนวน
+                                                                      Sensor Gateway (k)</label>
+                                                            <div class="flex items-center space-x-2">
+                                                                      <input type="number" id="kValue" value="3" min="1"
+                                                                                max="10"
+                                                                                class="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-center font-bold text-lg">
+                                                                      <span class="text-sm text-gray-500">จุด</span>
+                                                            </div>
+                                                            <p class="text-xs text-gray-500 mt-1">*ใช้เกณฑ์ Minimax &
+                                                                      Least Squares</p>
+                                                  </div>
+
+                                                  <button onclick="calculateOptimization()"
+                                                            class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transform transition active:scale-95 flex items-center justify-center">
+                                                            <i class="fas fa-calculator mr-2"></i> คำนวณตำแหน่ง
+                                                  </button>
+                                        </div>
+
+                                        <div id="resultPanel"
+                                                  class="hidden bg-green-50 p-4 rounded-xl border border-green-100 animation-fade-in">
+                                                  <h2
+                                                            class="font-bold text-green-800 flex items-center justify-between mb-2">
+                                                            <span><i class="fas fa-check-circle mr-2"></i>
+                                                                      ผลการคำนวณ</span>
+                                                            <span
+                                                                      class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full animate-pulse">ปรับหมุดได้
+                                                                      (Draggable)</span>
+                                                  </h2>
+
+                                                  <div
+                                                            class="bg-white p-3 rounded-lg border border-green-200 shadow-sm mb-3 text-center">
+                                                            <p class="text-xs text-gray-500 uppercase tracking-wide">
+                                                                      ระยะทางสูงสุด (Max Distance)</p>
+                                                            <p class="text-3xl font-bold text-green-600"
+                                                                      id="maxDistanceDisplay">0.00 <span
+                                                                                class="text-sm text-gray-500">กม.</span>
+                                                            </p>
+                                                            <p class="text-[10px] text-gray-400">(ยิ่งน้อยยิ่งดี /
+                                                                      ปรับเปลี่ยนเมื่อลากหมุด)</p>
+                                                  </div>
+
+                                                  <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                                                            <div class="bg-white p-2 rounded border text-center">
+                                                                      <span
+                                                                                class="block text-gray-500">ระยะทางเฉลี่ย</span>
+                                                                      <span class="font-bold text-gray-800"
+                                                                                id="avgDistanceDisplay">-</span>
+                                                            </div>
+                                                            <div class="bg-white p-2 rounded border text-center">
+                                                                      <span
+                                                                                class="block text-gray-500">เวลาประมวลผล</span>
+                                                                      <span class="font-bold text-gray-800"
+                                                                                id="calcTimeDisplay">-</span>
+                                                            </div>
+                                                  </div>
+
+                                                  <div class="text-xs space-y-1">
+                                                            <p class="font-semibold text-gray-700">พิกัด Sensor Gateway
+                                                                      (อัปเดตสด):</p>
+                                                            <ul id="sensorListResult"
+                                                                      class="pl-2 space-y-1 text-gray-600 font-mono">
+                                                            </ul>
+                                                  </div>
+                                        </div>
+
+                                        <div class="p-3 bg-white border rounded-lg shadow-sm">
+                                                  <h3 class="text-xs font-bold text-gray-700 mb-2">คำอธิบายสัญลักษณ์
+                                                  </h3>
+                                                  <div class="flex items-center space-x-4 text-xs">
+                                                            <div class="flex items-center">
+                                                                      <div
+                                                                                class="w-3 h-3 bg-blue-600 rounded-full border border-white shadow mr-1">
+                                                                      </div>
+                                                                      <span>หมู่บ้าน</span>
+                                                            </div>
+                                                            <div class="flex items-center">
+                                                                      <i class="fas fa-star text-red-600 mr-1"></i>
+                                                                      <span>Sensor (ลากได้)</span>
+                                                            </div>
+                                                            <div class="flex items-center">
+                                                                      <div
+                                                                                class="w-3 h-3 bg-blue-200 border border-blue-400 mr-1 opacity-60">
+                                                                      </div>
+                                                                      <span>Voronoi</span>
+                                                            </div>
+                                                  </div>
+                                        </div>
+
+                              </div>
+
+                              <div class="p-2 border-t text-[10px] text-center text-gray-400 bg-gray-50">
+                                        พัฒนาโดย: พัฒน์นรี, พิมชนก, พรชนก<br>
+                                        ที่ปรึกษา: อ.สาธิต ศิริวัชน์, อ.พรไพลิน ตาไฝ
+                              </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 text-xs mb-3">
-                        <div class="bg-white p-2 rounded border text-center">
-                            <span class="block text-gray-500">ระยะทางเฉลี่ย</span>
-                            <span class="font-bold text-gray-800" id="avgDistanceDisplay">-</span>
-                        </div>
-                        <div class="bg-white p-2 rounded border text-center">
-                            <span class="block text-gray-500">เวลาประมวลผล</span>
-                            <span class="font-bold text-gray-800" id="calcTimeDisplay">-</span>
-                        </div>
+                    <div class="flex-1 relative bg-gray-200">
+                              <div id="map"></div>
+
+                              <div class="absolute top-4 right-4 z-10 flex flex-col space-y-2">
+                                        <button onclick="toggle3D()"
+                                                  class="bg-white p-2.5 rounded-lg shadow text-gray-700 hover:text-blue-600 transition"
+                                                  title="สลับมุมมอง 2D/3D">
+                                                  <i class="fas fa-cube text-lg"></i>
+                                        </button>
+                              </div>
                     </div>
+          </div>
 
-                    <div class="text-xs space-y-1">
-                        <p class="font-semibold text-gray-700">พิกัด Sensor Gateway (อัปเดตสด):</p>
-                        <ul id="sensorListResult" class="pl-2 space-y-1 text-gray-600 font-mono"></ul>
-                    </div>
-                </div>
+          <script>
+                    const API_KEY = '0qulgAEf6qXR2wUTuPdT';
+                    const START_LOC = [97.965, 19.302];
 
-                <div class="p-3 bg-white border rounded-lg shadow-sm">
-                    <h3 class="text-xs font-bold text-gray-700 mb-2">คำอธิบายสัญลักษณ์</h3>
-                    <div class="flex items-center space-x-4 text-xs">
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 bg-blue-600 rounded-full border border-white shadow mr-1"></div>
-                            <span>หมู่บ้าน</span>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-star text-red-600 mr-1"></i>
-                            <span>Sensor (ลากได้)</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 bg-blue-200 border border-blue-400 mr-1 opacity-60"></div>
-                            <span>Voronoi</span>
-                        </div>
-                    </div>
-                </div>
+                    let map;
+                    let villages = [];
+                    let villageMarkers = [];
+                    let sensorMarkers = [];
+                    let currentSensorsData = []; // เก็บตำแหน่ง Sensor ปัจจุบัน (รวมตอนลาก)
+                    let is3D = true;
 
-            </div>
+                    document.addEventListener('DOMContentLoaded', () => {
+                              initMap();
+                              document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+                    });
 
-            <div class="p-2 border-t text-[10px] text-center text-gray-400 bg-gray-50">
-                พัฒนาโดย: พัฒน์นรี, พิมชนก, พรชนก<br>
-                ที่ปรึกษา: อ.สาธิต ศิริวัชน์, อ.พรไพลิน ตาไฝ
-            </div>
-        </div>
+                    function initMap() {
+                              map = new maplibregl.Map({
+                                        container: 'map',
+                                        style: `https://api.maptiler.com/maps/hybrid/style.json?key=${API_KEY}`,
+                                        center: START_LOC,
+                                        zoom: 13,
+                                        pitch: 60,
+                                        bearing: -10,
+                                        antialias: true
+                              });
 
-        <div class="flex-1 relative bg-gray-200">
-            <div id="map"></div>
+                              map.on('load', () => {
+                                        map.addSource('maptiler-terrain', {
+                                                  'type': 'raster-dem',
+                                                  'url': `https://api.maptiler.com/tiles/terrain-rgb/tiles.json?key=${API_KEY}`,
+                                                  'tileSize': 512,
+                                                  'maxzoom': 14
+                                        });
+                                        map.setTerrain({ 'source': 'maptiler-terrain', 'exaggeration': 1.5 });
 
-            <div class="absolute top-4 right-4 z-10 flex flex-col space-y-2">
-                <button onclick="toggle3D()"
-                    class="bg-white p-2.5 rounded-lg shadow text-gray-700 hover:text-blue-600 transition"
-                    title="สลับมุมมอง 2D/3D">
-                    <i class="fas fa-cube text-lg"></i>
-                </button>
-            </div>
-        </div>
-    </div>
+                                        map.addSource('voronoi', {
+                                                  'type': 'geojson',
+                                                  'data': { type: 'FeatureCollection', features: [] }
+                                        });
 
-    <script>
-        const API_KEY = '0qulgAEf6qXR2wUTuPdT';
-        const START_LOC = [97.965, 19.302];
+                                        map.addLayer({
+                                                  'id': 'voronoi-fill',
+                                                  'type': 'fill',
+                                                  'source': 'voronoi',
+                                                  'paint': {
+                                                            'fill-color': ['get', 'color'],
+                                                            'fill-opacity': 0.25
+                                                  }
+                                        });
 
-        let map;
-        let villages = [];
-        let villageMarkers = [];
-        let sensorMarkers = [];
-        let currentSensorsData = []; // เก็บตำแหน่ง Sensor ปัจจุบัน (รวมตอนลาก)
-        let is3D = true;
+                                        map.addLayer({
+                                                  'id': 'voronoi-line',
+                                                  'type': 'line',
+                                                  'source': 'voronoi',
+                                                  'paint': {
+                                                            'line-color': '#ffffff',
+                                                            'line-width': 2,
+                                                            'line-opacity': 0.8
+                                                  }
+                                        });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initMap();
-            document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
-        });
+                                        // Layer สำหรับเส้น Max Distance
+                                        map.addSource('max-dist-line', {
+                                                  'type': 'geojson',
+                                                  'data': { type: 'FeatureCollection', features: [] }
+                                        });
 
-        function initMap() {
-            map = new maplibregl.Map({
-                container: 'map',
-                style: `https://api.maptiler.com/maps/hybrid/style.json?key=${API_KEY}`,
-                center: START_LOC,
-                zoom: 13,
-                pitch: 60,
-                bearing: -10,
-                antialias: true
-            });
+                                        map.addLayer({
+                                                  'id': 'max-dist-line-layer',
+                                                  'type': 'line',
+                                                  'source': 'max-dist-line',
+                                                  'layout': {
+                                                            'line-join': 'round',
+                                                            'line-cap': 'round'
+                                                  },
+                                                  'paint': {
+                                                            'line-color': '#DC2626', // สีแดง
+                                                            'line-width': 3,
+                                                            'line-dasharray': [2, 2], // เส้นปะ
+                                                            'line-opacity': 0.9
+                                                  }
+                                        });
+                              });
 
-            map.on('load', () => {
-                map.addSource('maptiler-terrain', {
-                    'type': 'raster-dem',
-                    'url': `https://api.maptiler.com/tiles/terrain-rgb/tiles.json?key=${API_KEY}`,
-                    'tileSize': 512,
-                    'maxzoom': 14
-                });
-                map.setTerrain({ 'source': 'maptiler-terrain', 'exaggeration': 1.5 });
+                              map.on('click', (e) => {
+                                        addVillage(e.lngLat.lat, e.lngLat.lng);
+                              });
 
-                map.addSource('voronoi', {
-                    'type': 'geojson',
-                    'data': { type: 'FeatureCollection', features: [] }
-                });
-
-                map.addLayer({
-                    'id': 'voronoi-fill',
-                    'type': 'fill',
-                    'source': 'voronoi',
-                    'paint': {
-                        'fill-color': ['get', 'color'],
-                        'fill-opacity': 0.25
+                              map.getCanvas().style.cursor = 'crosshair';
+                              map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
                     }
-                });
 
-                map.addLayer({
-                    'id': 'voronoi-line',
-                    'type': 'line',
-                    'source': 'voronoi',
-                    'paint': {
-                        'line-color': '#ffffff',
-                        'line-width': 2,
-                        'line-opacity': 0.8
+                    function addVillage(lat, lng) {
+                              villages.push({ lat, lng });
+                              const el = document.createElement('div');
+                              el.className = 'village-marker';
+                              const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+                              villageMarkers.push(marker);
+                              updateVillageUI();
                     }
-                });
 
-                // Layer สำหรับเส้น Max Distance
-                map.addSource('max-dist-line', {
-                    'type': 'geojson',
-                    'data': { type: 'FeatureCollection', features: [] }
-                });
+                    function updateVillageUI() {
+                              const list = document.getElementById('villageList');
+                              const count = document.getElementById('villageCount');
+                              count.innerText = `จำนวน: ${villages.length} แห่ง`;
 
-                map.addLayer({
-                    'id': 'max-dist-line-layer',
-                    'type': 'line',
-                    'source': 'max-dist-line',
-                    'layout': {
-                        'line-join': 'round',
-                        'line-cap': 'round'
-                    },
-                    'paint': {
-                        'line-color': '#DC2626', // สีแดง
-                        'line-width': 3,
-                        'line-dasharray': [2, 2], // เส้นปะ
-                        'line-opacity': 0.9
-                    }
-                });
-            });
+                              if (villages.length === 0) {
+                                        list.innerHTML = '<li class="text-center text-gray-400 py-4 italic">ยังไม่มีข้อมูลหมู่บ้าน</li>';
+                                        return;
+                              }
 
-            map.on('click', (e) => {
-                addVillage(e.lngLat.lat, e.lngLat.lng);
-            });
-
-            map.getCanvas().style.cursor = 'crosshair';
-            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-        }
-
-        function addVillage(lat, lng) {
-            villages.push({ lat, lng });
-            const el = document.createElement('div');
-            el.className = 'village-marker';
-            const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
-            villageMarkers.push(marker);
-            updateVillageUI();
-        }
-
-        function updateVillageUI() {
-            const list = document.getElementById('villageList');
-            const count = document.getElementById('villageCount');
-            count.innerText = `จำนวน: ${villages.length} แห่ง`;
-
-            if (villages.length === 0) {
-                list.innerHTML = '<li class="text-center text-gray-400 py-4 italic">ยังไม่มีข้อมูลหมู่บ้าน</li>';
-                return;
-            }
-
-            let html = '';
-            villages.slice().reverse().forEach((v, i) => {
-                html += `
+                              let html = '';
+                              villages.slice().reverse().forEach((v, i) => {
+                                        html += `
                 <li class="flex justify-between items-center bg-gray-50 px-2 py-1 rounded border border-gray-100">
                     <span class="text-xs font-mono">#${villages.length - i} : ${v.lat.toFixed(4)}, ${v.lng.toFixed(4)}</span>
                     <button onclick="removeVillage(${villages.length - 1 - i})" class="text-red-400 hover:text-red-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </li>`;
-            });
-            list.innerHTML = html;
-        }
-
-        function removeVillage(index) {
-            // ลบ Marker จากแผนที่
-            if (villageMarkers[index]) {
-                villageMarkers[index].remove();
-            }
-
-            // ลบข้อมูลจาก Array
-            villages.splice(index, 1);
-            villageMarkers.splice(index, 1);
-
-            // อัปเดตหน้าจอ
-            updateVillageUI();
-
-            // ถ้าลบหมดให้เคลียร์ค่าทั้งหมดเพื่อความสะอาด
-            if (villages.length === 0) {
-                clearAll();
-            } else if (currentSensorsData.length > 0) {
-                // ถ้ายังมีข้อมูล Sensor อยู่ ให้คำนวณเส้น Max Distance ใหม่
-                updateStatsAndVisuals(currentSensorsData);
-            }
-        }
-
-        function clearAll() {
-            villages = [];
-            currentSensorsData = [];
-            villageMarkers.forEach(m => m.remove());
-            sensorMarkers.forEach(m => m.remove());
-            villageMarkers = [];
-            sensorMarkers = [];
-            if (map.getSource('max-dist-line')) map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [] });
-            if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: [] });
-            document.getElementById('resultPanel').classList.add('hidden');
-            updateVillageUI();
-        }
-
-        function calculateOptimization() {
-            const k = parseInt(document.getElementById('kValue').value);
-            if (villages.length < k) { alert(`จำนวนหมู่บ้าน (${villages.length}) ต้อง >= จำนวน Sensor (${k})`); return; }
-
-            const startTime = performance.now();
-            let sensors = initializeSensors(k);
-
-            for (let i = 0; i < 20; i++) {
-                const clusters = assignClusters(sensors);
-                const newSensors = updateCentroids(clusters, sensors);
-                let moved = 0;
-                for (let j = 0; j < k; j++) moved += haversine(sensors[j], newSensors[j]);
-                sensors = newSensors;
-                if (moved < 0.001) break;
-            }
-
-            const endTime = performance.now();
-            currentSensorsData = sensors; // จำค่าเริ่มต้นไว้
-            displayResults(sensors, ((endTime - startTime) / 1000).toFixed(2));
-        }
-
-        function initializeSensors(k) {
-            let sensors = [];
-            let pool = [...villages];
-            for (let i = 0; i < k; i++) {
-                const idx = Math.floor(Math.random() * pool.length);
-                sensors.push(pool[idx]);
-                pool.splice(idx, 1);
-            }
-            return sensors;
-        }
-
-        function assignClusters(sensors) {
-            const clusters = Array(sensors.length).fill().map(() => []);
-            villages.forEach(v => {
-                let closestIdx = 0, minD = Infinity;
-                sensors.forEach((s, i) => {
-                    const d = haversine(v, s);
-                    if (d < minD) { minD = d; closestIdx = i; }
-                });
-                clusters[closestIdx].push(v);
-            });
-            return clusters;
-        }
-
-        function updateCentroids(clusters, currentSensors) {
-            return currentSensors.map((s, i) => {
-                const cluster = clusters[i];
-                if (cluster.length === 0) return s;
-                const sumLat = cluster.reduce((sum, v) => sum + v.lat, 0);
-                const sumLng = cluster.reduce((sum, v) => sum + v.lng, 0);
-                return { lat: sumLat / cluster.length, lng: sumLng / cluster.length };
-            });
-        }
-
-        function haversine(p1, p2) {
-            const R = 6371;
-            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-            const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-
-        // --- ฟังก์ชันแสดงผลและ Logic การลาก (Drag) ---
-        function displayResults(sensors, time) {
-            // ล้าง Marker เก่า
-            sensorMarkers.forEach(m => m.remove());
-            sensorMarkers = [];
-
-            sensors.forEach((s, i) => {
-                const el = document.createElement('div');
-                el.className = 'sensor-marker';
-                el.innerHTML = '<i class="fas fa-star"></i>'; // รูปดาว
-
-                // สร้าง Marker แบบ Draggable (ลากได้)
-                const marker = new maplibregl.Marker({
-                    element: el,
-                    anchor: 'center',
-                    draggable: true // *** สำคัญ: เปิดให้ลากได้ ***
-                })
-                    .setLngLat([s.lng, s.lat])
-                    .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<b>Sensor Gateway #${i + 1}</b><br><span class="text-xs text-gray-500">ลากเพื่อเปลี่ยนตำแหน่ง</span>`))
-                    .addTo(map);
-
-                // --- Event: เมื่อลากเสร็จ (DragEnd) ---
-                marker.on('dragend', () => {
-                    const newLngLat = marker.getLngLat();
-                    // อัปเดตข้อมูลตำแหน่งใน Array
-                    currentSensorsData[i] = { lat: newLngLat.lat, lng: newLngLat.lng };
-
-                    // คำนวณค่าสถิติใหม่ทันที (Real-time Update)
-                    updateStatsAndVisuals(currentSensorsData, time);
-                });
-
-                sensorMarkers.push(marker);
-            });
-
-            // คำนวณและแสดงผลครั้งแรก
-            updateStatsAndVisuals(sensors, time);
-            document.getElementById('resultPanel').classList.remove('hidden');
-        }
-
-        // ฟังก์ชันอัปเดตตัวเลขกราฟิกเมื่อมีการลากเปลี่ยนตำแหน่ง
-        function updateStatsAndVisuals(sensors, time) {
-            let maxDist = 0, totalDist = 0;
-            let criticalPair = null; // เก็บคู่พิกัดที่เป็น Max Distance
-
-            // คำนวณระยะทางใหม่
-            villages.forEach(v => {
-                let minD = Infinity;
-                let closestSensor = null;
-                sensors.forEach(s => {
-                    const d = haversine(v, s);
-                    if (d < minD) {
-                        minD = d;
-                        closestSensor = s;
+                              });
+                              list.innerHTML = html;
                     }
-                });
-                if (minD > maxDist) {
-                    maxDist = minD;
-                    criticalPair = { village: v, sensor: closestSensor };
-                }
-                totalDist += minD;
-            });
 
-            // อัปเดตตัวเลขหน้าเว็บ
-            document.getElementById('maxDistanceDisplay').innerHTML = `${maxDist.toFixed(2)} <span class="text-sm text-gray-500">กม.</span>`;
-            document.getElementById('avgDistanceDisplay').innerText = `${(totalDist / villages.length).toFixed(2)} กม.`;
-            if (time) document.getElementById('calcTimeDisplay').innerText = `${time} วินาที`;
+                    function removeVillage(index) {
+                              // ลบ Marker จากแผนที่
+                              if (villageMarkers[index]) {
+                                        villageMarkers[index].remove();
+                              }
 
-            // อัปเดตลิสต์พิกัด
-            document.getElementById('sensorListResult').innerHTML = sensors.map((s, i) =>
-                `<li>#${i + 1}: ${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}</li>`
-            ).join('');
+                              // ลบข้อมูลจาก Array
+                              villages.splice(index, 1);
+                              villageMarkers.splice(index, 1);
 
-            // วาด Voronoi ใหม่ตามตำแหน่งล่าสุด
-            drawVoronoi(sensors);
+                              // อัปเดตหน้าจอ
+                              updateVillageUI();
 
-            // วาดเส้น Max Distance
-            if (criticalPair && map.getSource('max-dist-line')) {
-                const lineFeature = {
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'LineString',
-                        'coordinates': [
-                            [criticalPair.village.lng, criticalPair.village.lat],
-                            [criticalPair.sensor.lng, criticalPair.sensor.lat]
-                        ]
+                              // ถ้าลบหมดให้เคลียร์ค่าทั้งหมดเพื่อความสะอาด
+                              if (villages.length === 0) {
+                                        clearAll();
+                              } else if (currentSensorsData.length > 0) {
+                                        // ถ้ายังมีข้อมูล Sensor อยู่ ให้คำนวณเส้น Max Distance ใหม่
+                                        updateStatsAndVisuals(currentSensorsData);
+                              }
                     }
-                };
-                map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [lineFeature] });
-            } else if (map.getSource('max-dist-line')) {
-                map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [] });
-            }
-        }
 
-        function drawVoronoi(sensors) {
-            if (sensors.length < 1) return;
-            const bounds = [97.0, 18.0, 99.0, 20.0];
-            const points = sensors.map(s => [s.lng, s.lat]);
-            const delaunay = d3.Delaunay.from(points);
-            const voronoi = delaunay.voronoi(bounds);
-            const features = [];
-            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+                    function clearAll() {
+                              villages = [];
+                              currentSensorsData = [];
+                              villageMarkers.forEach(m => m.remove());
+                              sensorMarkers.forEach(m => m.remove());
+                              villageMarkers = [];
+                              sensorMarkers = [];
+                              if (map.getSource('max-dist-line')) map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [] });
+                              if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: [] });
+                              document.getElementById('resultPanel').classList.add('hidden');
+                              updateVillageUI();
+                    }
 
-            for (let i = 0; i < sensors.length; i++) {
-                const poly = voronoi.cellPolygon(i);
-                if (poly) {
-                    features.push({
-                        'type': 'Feature',
-                        'properties': { 'color': colors[i % colors.length] },
-                        'geometry': { 'type': 'Polygon', 'coordinates': [poly] }
+                    function calculateOptimization() {
+                              const k = parseInt(document.getElementById('kValue').value);
+                              if (villages.length < k) { alert(`จำนวนหมู่บ้าน (${villages.length}) ต้อง >= จำนวน Sensor (${k})`); return; }
+
+                              const startTime = performance.now();
+                              let sensors = initializeSensors(k);
+
+                              for (let i = 0; i < 20; i++) {
+                                        const clusters = assignClusters(sensors);
+                                        const newSensors = updateCentroids(clusters, sensors);
+                                        let moved = 0;
+                                        for (let j = 0; j < k; j++) moved += haversine(sensors[j], newSensors[j]);
+                                        sensors = newSensors;
+                                        if (moved < 0.001) break;
+                              }
+
+                              const endTime = performance.now();
+                              currentSensorsData = sensors; // จำค่าเริ่มต้นไว้
+                              displayResults(sensors, ((endTime - startTime) / 1000).toFixed(2));
+                    }
+
+                    function initializeSensors(k) {
+                              let sensors = [];
+                              // Deterministic selection to ensure consistent results
+                              if (villages.length <= k) {
+                                        return villages.map(v => ({ ...v }));
+                              }
+                              for (let i = 0; i < k; i++) {
+                                        // Select indices evenly distributed
+                                        const idx = Math.floor(i * villages.length / k);
+                                        sensors.push({ ...villages[idx] });
+                              }
+                              return sensors;
+                    }
+
+                    function assignClusters(sensors) {
+                              const clusters = Array(sensors.length).fill().map(() => []);
+                              villages.forEach(v => {
+                                        let closestIdx = 0, minD = Infinity;
+                                        sensors.forEach((s, i) => {
+                                                  const d = haversine(v, s);
+                                                  if (d < minD) { minD = d; closestIdx = i; }
+                                        });
+                                        clusters[closestIdx].push(v);
+                              });
+                              return clusters;
+                    }
+
+                    function updateCentroids(clusters, currentSensors) {
+                              return currentSensors.map((s, i) => {
+                                        const cluster = clusters[i];
+                                        if (cluster.length === 0) return s;
+                                        const sumLat = cluster.reduce((sum, v) => sum + v.lat, 0);
+                                        const sumLng = cluster.reduce((sum, v) => sum + v.lng, 0);
+                                        return { lat: sumLat / cluster.length, lng: sumLng / cluster.length };
+                              });
+                    }
+
+                    function haversine(p1, p2) {
+                              const R = 6371;
+                              const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+                              const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+                              const a = Math.sin(dLat / 2) ** 2 + Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+                              return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    }
+
+                    // --- ฟังก์ชันแสดงผลและ Logic การลาก (Drag) ---
+                    function displayResults(sensors, time) {
+                              // ล้าง Marker เก่า
+                              sensorMarkers.forEach(m => m.remove());
+                              sensorMarkers = [];
+
+                              sensors.forEach((s, i) => {
+                                        const el = document.createElement('div');
+                                        el.className = 'sensor-marker';
+                                        el.innerHTML = '<i class="fas fa-star"></i>'; // รูปดาว
+
+                                        // สร้าง Marker แบบ Draggable (ลากได้)
+                                        const marker = new maplibregl.Marker({
+                                                  element: el,
+                                                  anchor: 'center',
+                                                  draggable: true // *** สำคัญ: เปิดให้ลากได้ ***
+                                        })
+                                                  .setLngLat([s.lng, s.lat])
+                                                  .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<b>Sensor Gateway #${i + 1}</b><br><span class="text-xs text-gray-500">ลากเพื่อเปลี่ยนตำแหน่ง</span>`))
+                                                  .addTo(map);
+
+                                        // --- Event: เมื่อลากเสร็จ (DragEnd) ---
+                                        marker.on('dragend', () => {
+                                                  const newLngLat = marker.getLngLat();
+                                                  // อัปเดตข้อมูลตำแหน่งใน Array
+                                                  currentSensorsData[i] = { lat: newLngLat.lat, lng: newLngLat.lng };
+
+                                                  // คำนวณค่าสถิติใหม่ทันที (Real-time Update)
+                                                  updateStatsAndVisuals(currentSensorsData, time);
+                                        });
+
+                                        sensorMarkers.push(marker);
+                              });
+
+                              // คำนวณและแสดงผลครั้งแรก
+                              updateStatsAndVisuals(sensors, time);
+                              document.getElementById('resultPanel').classList.remove('hidden');
+                    }
+
+                    // ฟังก์ชันอัปเดตตัวเลขกราฟิกเมื่อมีการลากเปลี่ยนตำแหน่ง
+                    function updateStatsAndVisuals(sensors, time) {
+                              let maxDist = 0, totalDist = 0;
+                              let criticalPair = null; // เก็บคู่พิกัดที่เป็น Max Distance
+
+                              // คำนวณระยะทางใหม่
+                              villages.forEach(v => {
+                                        let minD = Infinity;
+                                        let closestSensor = null;
+                                        sensors.forEach(s => {
+                                                  const d = haversine(v, s);
+                                                  if (d < minD) {
+                                                            minD = d;
+                                                            closestSensor = s;
+                                                  }
+                                        });
+                                        if (minD > maxDist) {
+                                                  maxDist = minD;
+                                                  criticalPair = { village: v, sensor: closestSensor };
+                                        }
+                                        totalDist += minD;
+                              });
+
+                              // อัปเดตตัวเลขหน้าเว็บ
+                              document.getElementById('maxDistanceDisplay').innerHTML = `${maxDist.toFixed(2)} <span class="text-sm text-gray-500">กม.</span>`;
+                              document.getElementById('avgDistanceDisplay').innerText = `${(totalDist / villages.length).toFixed(2)} กม.`;
+                              if (time) document.getElementById('calcTimeDisplay').innerText = `${time} วินาที`;
+
+                              // อัปเดตลิสต์พิกัด
+                              document.getElementById('sensorListResult').innerHTML = sensors.map((s, i) =>
+                                        `<li>#${i + 1}: ${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}</li>`
+                              ).join('');
+
+                              // วาด Voronoi ใหม่ตามตำแหน่งล่าสุด
+                              drawVoronoi(sensors);
+
+                              // วาดเส้น Max Distance
+                              if (criticalPair && map.getSource('max-dist-line')) {
+                                        const lineFeature = {
+                                                  'type': 'Feature',
+                                                  'geometry': {
+                                                            'type': 'LineString',
+                                                            'coordinates': [
+                                                                      [criticalPair.village.lng, criticalPair.village.lat],
+                                                                      [criticalPair.sensor.lng, criticalPair.sensor.lat]
+                                                            ]
+                                                  }
+                                        };
+                                        map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [lineFeature] });
+                              } else if (map.getSource('max-dist-line')) {
+                                        map.getSource('max-dist-line').setData({ type: 'FeatureCollection', features: [] });
+                              }
+                    }
+
+                    function drawVoronoi(sensors) {
+                              if (sensors.length < 1) return;
+                              const bounds = [97.0, 18.0, 99.0, 20.0];
+                              const points = sensors.map(s => [s.lng, s.lat]);
+                              const delaunay = d3.Delaunay.from(points);
+                              const voronoi = delaunay.voronoi(bounds);
+                              const features = [];
+                              const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+                              for (let i = 0; i < sensors.length; i++) {
+                                        const poly = voronoi.cellPolygon(i);
+                                        if (poly) {
+                                                  features.push({
+                                                            'type': 'Feature',
+                                                            'properties': { 'color': colors[i % colors.length] },
+                                                            'geometry': { 'type': 'Polygon', 'coordinates': [poly] }
+                                                  });
+                                        }
+                              }
+                              if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: features });
+                    }
+
+                    function handleCSV(e) {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = function (event) {
+                                        const lines = event.target.result.split('\n');
+                                        lines.slice(1).forEach(line => {
+                                                  const [lat, lng] = line.split(',').map(parseFloat);
+                                                  if (!isNaN(lat) && !isNaN(lng)) addVillage(lat, lng);
+                                        });
+                              };
+                              reader.readAsText(file);
+                    }
+
+                    function toggle3D() {
+                              is3D = !is3D;
+                              map.easeTo({ pitch: is3D ? 60 : 0 });
+                    }
+
+                    function toggleSidebar() {
+                              const sidebar = document.getElementById('sidebar');
+                              if (window.innerWidth < 768) {
+                                        sidebar.classList.toggle('active');
+                                        sidebar.classList.remove('hidden');
+                              } else {
+                                        sidebar.classList.toggle('hidden');
+                              }
+                    }
+
+                    window.addEventListener('resize', () => {
+                              if (window.innerWidth >= 768) {
+                                        document.getElementById('sidebar').classList.remove('active');
+                                        document.getElementById('sidebar').classList.remove('hidden');
+                              }
                     });
-                }
-            }
-            if (map.getSource('voronoi')) map.getSource('voronoi').setData({ type: 'FeatureCollection', features: features });
-        }
+                    // --- CSV Instruction Modal Logic ---
+                    function showCSVInstructions() {
+                              document.getElementById('csvModal').classList.remove('hidden');
+                    }
 
-        function handleCSV(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                const lines = event.target.result.split('\n');
-                lines.slice(1).forEach(line => {
-                    const [lat, lng] = line.split(',').map(parseFloat);
-                    if (!isNaN(lat) && !isNaN(lng)) addVillage(lat, lng);
-                });
-            };
-            reader.readAsText(file);
-        }
+                    function closeCSVInstructions() {
+                              document.getElementById('csvModal').classList.add('hidden');
+                    }
 
-        function toggle3D() {
-            is3D = !is3D;
-            map.easeTo({ pitch: is3D ? 60 : 0 });
-        }
+                    function proceedToUpload() {
+                              closeCSVInstructions();
+                              document.getElementById('csvInput').click();
+                    }
+          </script>
+          <!-- CSV Instruction Modal -->
+          <div id="csvModal"
+                    class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-popIn">
+                              <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
+                                        <i class="fas fa-file-csv text-green-600 mr-2"></i>คำแนะนำไฟล์ CSV
+                              </h3>
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            if (window.innerWidth < 768) {
-                sidebar.classList.toggle('active');
-                sidebar.classList.remove('hidden');
-            } else {
-                sidebar.classList.toggle('hidden');
-            }
-        }
+                              <div class="space-y-4 text-sm text-gray-600">
+                                        <p>เพื่อให้ระบบประมวลผลได้ถูกต้อง กรุณาเตรียมไฟล์ .csv ตามรูปแบบดังนี้:</p>
 
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
-                document.getElementById('sidebar').classList.remove('active');
-                document.getElementById('sidebar').classList.remove('hidden');
-            }
-        });
-        // --- CSV Instruction Modal Logic ---
-        function showCSVInstructions() {
-            document.getElementById('csvModal').classList.remove('hidden');
-        }
+                                        <ul class="list-disc pl-5 space-y-1">
+                                                  <li>บรรทัดที่ 1: หัวตาราง (Header) อะไรก็ได้ (ระบบจะข้ามบรรทัดแรก)
+                                                  </li>
+                                                  <li>บรรทัดที่ 2 เป็นต้นไป: ระบุพิกัด <b>Latitude</b>, <b>Longitude</b>
+                                                  </li>
+                                        </ul>
 
-        function closeCSVInstructions() {
-            document.getElementById('csvModal').classList.add('hidden');
-        }
+                                        <div class="bg-gray-50 p-3 rounded border font-mono text-xs">
+                                                  <div class="text-gray-400">// ตัวอย่างไฟล์</div>
+                                                  <div class="text-blue-600">name, lat, lng</div>
+                                                  <div>House1, 19.302, 97.965</div>
+                                                  <div>House2, 19.305, 97.968</div>
+                                                  <div class="text-gray-400">...</div>
+                                        </div>
 
-        function proceedToUpload() {
-            closeCSVInstructions();
-            document.getElementById('csvInput').click();
-        }
-    </script>
-    <!-- CSV Instruction Modal -->
-    <div id="csvModal"
-        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-popIn">
-            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
-                <i class="fas fa-file-csv text-green-600 mr-2"></i>คำแนะนำไฟล์ CSV
-            </h3>
+                                        <div
+                                                  class="bg-yellow-50 text-yellow-800 p-3 rounded text-xs border border-yellow-100 flex items-start">
+                                                  <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                                                  <span>ลำดับสำคัญมาก! ค่าแรกต้องเป็น Latitude (ละติจูด) และค่าหลังเป็น
+                                                            Longitude (ลองจิจูด)</span>
+                                        </div>
+                              </div>
 
-            <div class="space-y-4 text-sm text-gray-600">
-                <p>เพื่อให้ระบบประมวลผลได้ถูกต้อง กรุณาเตรียมไฟล์ .csv ตามรูปแบบดังนี้:</p>
-
-                <ul class="list-disc pl-5 space-y-1">
-                    <li>บรรทัดที่ 1: หัวตาราง (Header) อะไรก็ได้ (ระบบจะข้ามบรรทัดแรก)</li>
-                    <li>บรรทัดที่ 2 เป็นต้นไป: ระบุพิกัด <b>Latitude</b>, <b>Longitude</b></li>
-                </ul>
-
-                <div class="bg-gray-50 p-3 rounded border font-mono text-xs">
-                    <div class="text-gray-400">// ตัวอย่างไฟล์</div>
-                    <div class="text-blue-600">name, lat, lng</div>
-                    <div>House1, 19.302, 97.965</div>
-                    <div>House2, 19.305, 97.968</div>
-                    <div class="text-gray-400">...</div>
-                </div>
-
-                <div class="bg-yellow-50 text-yellow-800 p-3 rounded text-xs border border-yellow-100 flex items-start">
-                    <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
-                    <span>ลำดับสำคัญมาก! ค่าแรกต้องเป็น Latitude (ละติจูด) และค่าหลังเป็น Longitude (ลองจิจูด)</span>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end space-x-2">
-                <button onclick="closeCSVInstructions()"
-                    class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg transition">
-                    ยกเลิก
-                </button>
-                <button onclick="proceedToUpload()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow transition flex items-center">
-                    <i class="fas fa-upload mr-2"></i> เลือกไฟล์
-                </button>
-            </div>
-        </div>
-    </div>
+                              <div class="mt-6 flex justify-end space-x-2">
+                                        <button onclick="closeCSVInstructions()"
+                                                  class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg transition">
+                                                  ยกเลิก
+                                        </button>
+                                        <button onclick="proceedToUpload()"
+                                                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow transition flex items-center">
+                                                  <i class="fas fa-upload mr-2"></i> เลือกไฟล์
+                                        </button>
+                              </div>
+                    </div>
+          </div>
 </body>
 
 </html>
